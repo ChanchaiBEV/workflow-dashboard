@@ -30,33 +30,28 @@
             <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-lg w-full"><div class="flex items-center gap-3 mb-6"><div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center text-white text-xl">⚙️</div><h2 class="text-2xl font-bold text-gray-800">ตั้งค่า</h2></div><div class="mb-6"><label class="block text-sm font-semibold text-gray-700 mb-3">Apps Script URL</label><input type="text" id="urlInput" placeholder="https://script.google.com/macros/s/.../exec" class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors bg-gray-50"/></div><div id="settingsError" class="hidden mb-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 text-sm rounded-r-lg"></div><div class="flex gap-3"><button id="saveSettingsBtn" class="flex-1 bg-gradient-to-r from-blue-500 to-purple-600 text-white py-3 rounded-lg font-semibold hover:shadow-lg transition-all">บันทึก</button><button id="closeSettingsBtn" class="px-6 bg-gray-200 text-gray-700 py-3 rounded-lg font-semibold hover:bg-gray-300 transition-colors">ยกเลิก</button></div></div>
         </div>
         <div class="mb-8">
-            <div class="header-gradient rounded-2xl shadow-lg p-8 text-white"><div class="flex items-start justify-between gap-4 mb-6 flex-wrap"><h1 class="text-4xl font-bold">📊 Test Workflow</h1><div class="flex gap-2 flex-wrap"><button id="refreshBtn" class="bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-4 py-2.5 text-sm rounded-lg font-semibold flex items-center gap-2"><span>🔄</span> รีเฟรช</button><button id="openSettingsBtn" class="bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-4 py-2.5 text-sm rounded-lg font-semibold flex items-center gap-2"><span>⚙️</span> ตั้งค่า</button></div></div><div class="flex items-center justify-between flex-wrap gap-4 bg-black bg-opacity-20 rounded-lg p-4"><div class="flex items-center gap-2"><span class="w-2 h-2 bg-green-400 rounded-full pulse-indicator"></span><p id="lastUpdate" class="text-sm text-blue-100 hidden"></p></div><div class="flex items-center gap-3 bg-white rounded-lg px-3 py-2"><label class="text-sm font-medium text-gray-900">รีเฟรชอัตโนมัติ:</label><select id="refreshInterval" class="bg-white text-gray-900 border-0 rounded-lg text-sm focus:outline-none font-semibold"><option value="0">ปิด</option><option value="30" selected>30 วิ</option><option value="60">60 วิ</option><option value="120">2 นาที</option></select></div></div></div>
+            <div class="header-gradient rounded-2xl shadow-lg p-8 text-white">
+                <div class="flex items-start justify-between gap-4 mb-6 flex-wrap">
+                    <h1 class="text-4xl font-bold">📊 Test Workflow</h1>
+                    <div class="flex gap-2 flex-wrap">
+                        <a href="https://docs.google.com/spreadsheets/d/1K5532IFh_zpI_ZI7TcDedyYedztRvRMEXcdo3BSBvXA/edit?usp=sharing" target="_blank" class="bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-4 py-2.5 text-sm rounded-lg font-semibold flex items-center gap-2">
+                            <span>📜</span> เปิด Google Sheet
+                        </a>
+                        <button id="refreshBtn" class="bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-4 py-2.5 text-sm rounded-lg font-semibold flex items-center gap-2"><span>🔄</span> รีเฟรช</button>
+                        <button id="openSettingsBtn" class="bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-4 py-2.5 text-sm rounded-lg font-semibold flex items-center gap-2"><span>⚙️</span> ตั้งค่า</button>
+                    </div>
+                </div>
+                <div class="flex items-center justify-between flex-wrap gap-4 bg-black bg-opacity-20 rounded-lg p-4"><div class="flex items-center gap-2"><span class="w-2 h-2 bg-green-400 rounded-full pulse-indicator"></span><p id="lastUpdate" class="text-sm text-blue-100 hidden"></p></div><div class="flex items-center gap-3 bg-white rounded-lg px-3 py-2"><label class="text-sm font-medium text-gray-900">รีเฟรชอัตโนมัติ:</label><select id="refreshInterval" class="bg-white text-gray-900 border-0 rounded-lg text-sm focus:outline-none font-semibold"><option value="0">ปิด</option><option value="30" selected>30 วิ</option><option value="60">60 วิ</option><option value="120">2 นาที</option></select></div></div>
+            </div>
             <div id="mainError" class="hidden mt-4 p-4 bg-red-100 border-l-4 border-red-500 text-red-700 text-sm rounded-lg"></div>
         </div>
 
-        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-8">
-            <select id="customerFilter" class="filter-box w-full px-4 py-3.5 bg-white text-gray-900 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-indigo-500 transition-all">
-                <option value="">-- ทุก​ลูกค้า --</option>
-            </select>
-            <select id="testerFilter" class="filter-box w-full px-4 py-3.5 bg-white text-gray-900 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-indigo-500 transition-all">
-                <option value="">-- ทุก​ผู้ทดสอบ --</option>
-            </select>
-            <select id="salespersonFilter" class="filter-box w-full px-4 py-3.5 bg-white text-gray-900 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-indigo-500 transition-all">
-                <option value="">-- ทุกเซลล์ --</option>
-            </select>
-            <select id="statusFilter" class="filter-box w-full px-4 py-3.5 bg-white text-gray-900 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-indigo-500 transition-all">
-                <option value="">-- ทุกสถานะ --</option>
-                <option value="ผ่าน">✓ ผ่าน</option>
-                <option value="ไม่ผ่าน">✕ ไม่ผ่าน</option>
-                <option value="รอทดสอบ">◌ รอทดสอบ</option>
-            </select>
-            <select id="monthFilter" class="filter-box w-full px-4 py-3.5 bg-white text-gray-900 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-indigo-500 transition-all">
-                <option value="">-- ทุกเดือน (PM) --</option>
-                <option value="ม.ค.">มกราคม</option><option value="ก.พ.">กุมภาพันธ์</option><option value="มี.ค.">มีนาคม</option>
-                <option value="เม.ย.">เมษายน</option><option value="พ.ค.">พฤษภาคม</option><option value="มิ.ย.">มิถุนายน</option>
-                <option value="ก.ค.">กรกฎาคม</option><option value="ส.ค.">สิงหาคม</option><option value="ก.ย.">กันยายน</option>
-                <option value="ต.ค.">ตุลาคม</option><option value="พ.ย.">พฤศจิกายน</option><option value="ธ.ค.">ธันวาคม</option>
-            </select>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
+            <select id="customerFilter" class="filter-box w-full px-4 py-3.5 bg-white text-gray-900 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-indigo-500 transition-all"><option value="">-- ทุก​ลูกค้า --</option></select>
+            <select id="testerFilter" class="filter-box w-full px-4 py-3.5 bg-white text-gray-900 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-indigo-500 transition-all"><option value="">-- ทุก​ผู้ทดสอบ --</option></select>
+            <select id="salespersonFilter" class="filter-box w-full px-4 py-3.5 bg-white text-gray-900 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-indigo-500 transition-all"><option value="">-- ทุกเซลล์ --</option></select>
+            <select id="statusFilter" class="filter-box w-full px-4 py-3.5 bg-white text-gray-900 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-indigo-500 transition-all"><option value="">-- ทุกสถานะ --</option><option value="ผ่าน">✓ ผ่าน</option><option value="ไม่ผ่าน">✕ ไม่ผ่าน</option><option value="รอทดสอบ">◌ รอทดสอบ</option></select>
+            <select id="monthFilter" class="filter-box w-full px-4 py-3.5 bg-white text-gray-900 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-indigo-500 transition-all"><option value="">-- ทุกเดือน (PM) --</option><option value="ม.ค.">มกราคม</option><option value="ก.พ.">กุมภาพันธ์</option><option value="มี.ค.">มีนาคม</option><option value="เม.ย.">เมษายน</option><option value="พ.ค.">พฤษภาคม</option><option value="มิ.ย.">มิถุนายน</option><option value="ก.ค.">กรกฎาคม</option><option value="ส.ค.">สิงหาคม</option><option value="ก.ย.">กันยายน</option><option value="ต.ค.">ตุลาคม</option><option value="พ.ย.">พฤศจิกายน</option><option value="ธ.ค.">ธันวาคม</option></select>
         </div>
 
         <div id="content" class="space-y-4"></div>
@@ -92,21 +87,17 @@
                 const customers = new Set();
                 const testers = new Set();
                 const salespeople = new Set();
-
                 state.allData.forEach(group => {
                     if (group.customer) customers.add(group.customer.trim());
                     if (group.tester) testers.add(group.tester.trim());
                     if (group.salesperson) salespeople.add(group.salesperson.trim());
                 });
-
                 const sortedCustomers = Array.from(customers).sort((a, b) => a.localeCompare(b, 'th'));
                 elements.customerFilter.innerHTML = '<option value="">-- ทุก​ลูกค้า --</option>' + sortedCustomers.map(n => `<option value="${n}">${n}</option>`).join('');
                 elements.customerFilter.value = state.filters.customer;
-
                 const sortedTesters = Array.from(testers).sort((a, b) => a.localeCompare(b, 'th'));
                 elements.testerFilter.innerHTML = '<option value="">-- ทุก​ผู้ทดสอบ --</option>' + sortedTesters.map(n => `<option value="${n}">${n}</option>`).join('');
                 elements.testerFilter.value = state.filters.tester;
-
                 const sortedSalespeople = Array.from(salespeople).sort((a, b) => a.localeCompare(b, 'th'));
                 elements.salespersonFilter.innerHTML = '<option value="">-- ทุกเซลล์ --</option>' + sortedSalespeople.map(n => `<option value="${n}">${n}</option>`).join('');
                 elements.salespersonFilter.value = state.filters.salesperson;
@@ -114,19 +105,10 @@
             
             function renderContent() {
                 const { customer, tester, salesperson, status, month } = state.filters;
-                
-                let processedData = state.allData
-                    .filter(group => 
-                        (!customer || group.customer === customer) &&
-                        (!tester || group.tester === tester) &&
-                        (!salesperson || group.salesperson === salesperson) &&
-                        (!month || (group.pmData && group.pmData.month && group.pmData.month.includes(month)))
-                    );
-
+                let processedData = state.allData.filter(group => (!customer || group.customer === customer) && (!tester || group.tester === tester) && (!salesperson || group.salesperson === salesperson) && (!month || (group.pmData && group.pmData.month && group.pmData.month.includes(month))));
                 if (status) {
                     processedData = processedData.map(group => ({ ...group, devices: group.devices.filter(device => device.result.includes(status)) })).filter(group => group.devices.length > 0);
                 }
-
                 if (processedData.length === 0) {
                     elements.content.innerHTML = '<div class="bg-white rounded-xl shadow-lg p-16 text-center"><div class="text-4xl mb-4">🔍</div><p class="text-gray-600 text-lg">ไม่พบข้อมูล</p><p class="text-gray-500 text-sm mt-2">ลองปรับเปลี่ยนการค้นหาของคุณ</p></div>';
                     return;
@@ -134,44 +116,7 @@
                 elements.content.innerHTML = processedData.map((g, i) => createGroupCardHTML(g, i)).join('');
             }
             
-            function createGroupCardHTML(group, index) { 
-                const statuses=[{count:group.statusCount.passed,label:'ผ่าน',icon:'✓',color:'bg-emerald-100 text-emerald-700'},{count:group.statusCount.failed,label:'ไม่ผ่าน',icon:'✕',color:'bg-rose-100 text-rose-700'},{count:group.statusCount.pending,label:'รอทดสอบ',icon:'◌',color:'bg-slate-100 text-slate-700'}];
-                const sBadges=statuses.filter(s=>s.count>0).map(s=>`<div class="status-badge ${s.color}"><span>${s.icon}</span> ${s.count} ${s.label}</div>`).join('');
-                const mSolution=group.devices.length>0?group.devices[0].solution:'';
-                const pmEngineerHTML=group.pmData?`<div class="mt-6 pt-6 border-t border-gray-200"><h4 class="font-bold text-gray-800 mb-4 flex items-center gap-2"><span class="w-1.5 h-1.5 bg-blue-500 rounded-full"></span>ข้อมูล PM Engineer</h4><div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm"><div class="bg-slate-50 rounded-lg p-3 border border-slate-200"><dt class="text-xs font-semibold text-slate-600 mb-1">ความถี่</dt><dd class="text-slate-900 font-medium">${group.pmData.frequency||'-'}</dd></div><div class="bg-slate-50 rounded-lg p-3 border border-slate-200"><dt class="text-xs font-semibold text-slate-600 mb-1">เดือน</dt><dd class="text-slate-900 font-medium">${group.pmData.month||'-'}</dd></div><div class="bg-slate-50 rounded-lg p-3 border border-slate-200"><dt class="text-xs font-semibold text-slate-600 mb-1">ผู้รับผิดชอบ</dt><dd class="text-slate-900 font-medium">${group.pmData.personInCharge||'-'}</dd></div><div class="bg-slate-50 rounded-lg p-3 border border-slate-200"><dt class="text-xs font-semibold text-slate-600 mb-1">เซลล์ที่ดูแล</dt><dd class="text-slate-900 font-medium">${group.pmData.salesperson||'-'}</dd></div></div></div>`:'';
-                
-                return `
-                    <div class="card-container bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
-                        <div class="p-6 bg-white cursor-pointer hover:bg-gray-50 transition-colors" data-toggle-index="${index}">
-                            <div class="flex items-start justify-between gap-4">
-                                <div class="flex-1 min-w-0">
-                                    <div class="flex items-center gap-3 mb-4 flex-wrap">
-                                        <h3 class="text-2xl font-bold text-gray-800">${group.customer}</h3>
-                                        <span class="inline-flex items-center gap-2 bg-indigo-100 text-indigo-700 px-3 py-1.5 rounded-full text-sm font-semibold">CI: ${group.ci}</span>
-                                        ${mSolution ? `<span class="inline-flex items-center gap-2 bg-cyan-100 text-cyan-700 px-3 py-1.5 rounded-full text-sm font-semibold">${mSolution}</span>` : ''}
-                                    </div>
-                                    <div class="flex flex-wrap gap-x-4 gap-y-2 text-sm text-gray-800 mt-3">
-                                        <span><strong class="font-bold text-indigo-600">ผู้ทดสอบ:</strong> ${group.tester || '-'}</span>
-                                        <span><strong class="font-bold text-indigo-600">เซลล์ที่ดูแล:</strong> ${group.salesperson || '-'}</span>
-                                        <span><strong class="font-bold text-indigo-600">วันที่ทำการทดสอบ:</strong> ${group.date || '-'}</span>
-                                    </div>
-                                </div>
-                                <div class="flex flex-col items-end gap-4 flex-wrap justify-end">
-                                    <div class="badge-group justify-end">${sBadges}</div>
-                                    <span class="arrow-icon text-gray-400 ml-4 text-xl">▼</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="details-content">
-                            <div class="px-6 py-4 border-t border-gray-200 space-y-4">
-                                ${group.devices.map(createDeviceRowHTML).join('')}
-                                ${pmEngineerHTML}
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }
-
+            function createGroupCardHTML(group, index) { const statuses=[{count:group.statusCount.passed,label:'ผ่าน',icon:'✓',color:'bg-emerald-100 text-emerald-700'},{count:group.statusCount.failed,label:'ไม่ผ่าน',icon:'✕',color:'bg-rose-100 text-rose-700'},{count:group.statusCount.pending,label:'รอทดสอบ',icon:'◌',color:'bg-slate-100 text-slate-700'}];const sBadges=statuses.filter(s=>s.count>0).map(s=>`<div class="status-badge ${s.color}"><span>${s.icon}</span> ${s.count} ${s.label}</div>`).join('');const mSolution=group.devices.length>0?group.devices[0].solution:'';const pmEngineerHTML=group.pmData?`<div class="mt-6 pt-6 border-t border-gray-200"><h4 class="font-bold text-gray-800 mb-4 flex items-center gap-2"><span class="w-1.5 h-1.5 bg-blue-500 rounded-full"></span>ข้อมูล PM Engineer</h4><div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm"><div class="bg-slate-50 rounded-lg p-3 border border-slate-200"><dt class="text-xs font-semibold text-slate-600 mb-1">ความถี่</dt><dd class="text-slate-900 font-medium">${group.pmData.frequency||'-'}</dd></div><div class="bg-slate-50 rounded-lg p-3 border border-slate-200"><dt class="text-xs font-semibold text-slate-600 mb-1">เดือน</dt><dd class="text-slate-900 font-medium">${group.pmData.month||'-'}</dd></div><div class="bg-slate-50 rounded-lg p-3 border border-slate-200"><dt class="text-xs font-semibold text-slate-600 mb-1">ผู้รับผิดชอบ</dt><dd class="text-slate-900 font-medium">${group.pmData.personInCharge||'-'}</dd></div><div class="bg-slate-50 rounded-lg p-3 border border-slate-200"><dt class="text-xs font-semibold text-slate-600 mb-1">เซลล์ที่ดูแล</dt><dd class="text-slate-900 font-medium">${group.pmData.salesperson||'-'}</dd></div></div></div>`:'';return`<div class="card-container bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden"><div class="p-6 bg-white cursor-pointer hover:bg-gray-50 transition-colors" data-toggle-index="${index}"><div class="flex items-start justify-between gap-4"><div class="flex-1 min-w-0"><div class="flex items-center gap-3 mb-4 flex-wrap"><h3 class="text-2xl font-bold text-gray-800">${group.customer}</h3><span class="inline-flex items-center gap-2 bg-indigo-100 text-indigo-700 px-3 py-1.5 rounded-full text-sm font-semibold">CI: ${group.ci}</span>${mSolution?`<span class="inline-flex items-center gap-2 bg-cyan-100 text-cyan-700 px-3 py-1.5 rounded-full text-sm font-semibold">${mSolution}</span>`:''}</div><div class="flex flex-wrap gap-x-4 gap-y-2 text-sm text-gray-800 mt-3"><span><strong class="font-bold text-indigo-600">ผู้ทดสอบ:</strong> ${group.tester||'-'}</span><span><strong class="font-bold text-indigo-600">เซลล์ที่ดูแล:</strong> ${group.salesperson||'-'}</span><span><strong class="font-bold text-indigo-600">วันที่ทำการทดสอบ:</strong> ${group.date||'-'}</span></div></div><div class="flex flex-col items-end gap-4 flex-wrap justify-end"><div class="badge-group justify-end">${sBadges}</div><span class="arrow-icon text-gray-400 ml-4 text-xl">▼</span></div></div></div><div class="details-content"><div class="px-6 py-4 border-t border-gray-200 space-y-4">${group.devices.map(createDeviceRowHTML).join('')}${pmEngineerHTML}</div></div></div>`;}
             function createDeviceRowHTML(device) { const details=[{label:'อุปกรณ์',value:device.device},{label:'แบรนด์/รุ่น',value:device.brand},{label:'โปรโตคอล/การเชื่อมต่อ',value:device.protocol},{label:'ฟีเจอร์ที่ทดสอบ',value:device.features},{label:'หมายเหตุ',value:device.notes}];const dhtml=details.map(d=>d.value?`<dt class="font-semibold text-gray-500 text-sm">${d.label}</dt><dd class="text-gray-700 col-span-2">${d.value}</dd>`:'').join('');return`<div class="border-l-4 ${getStatusBorderColor(device.result)} pl-4 py-4 bg-slate-50 rounded-r-lg"><div class="flex items-start justify-between mb-3 gap-3 flex-wrap"><h4 class="font-semibold text-base text-gray-800">${device.solution||device.device||'อุปกรณ์'}</h4><span class="px-3 py-1.5 rounded-lg text-xs font-bold ${getStatusColorClass(device.result)}">${device.result||'รอทดสอบ'}</span></div>${dhtml?`<div class="grid grid-cols-3 gap-x-4 gap-y-2 text-sm">${dhtml}</div>`:''}</div>`;}
             function getStatusColorClass(s) { s=(s||'').toLowerCase();if(s.includes('ไม่ผ่าน'))return'bg-rose-500 text-white';if(s.includes('ผ่าน'))return'bg-emerald-500 text-white';return'bg-slate-500 text-white';}
             function getStatusBorderColor(s) { s=(s||'').toLowerCase();if(s.includes('ไม่ผ่าน'))return'border-rose-500';if(s.includes('ผ่าน'))return'border-emerald-500';return'border-slate-500';}
@@ -184,7 +129,6 @@
             function setLoadingState(L) { elements.refreshBtn.disabled = L; elements.refreshBtn.querySelector('span').innerHTML = L ? '⏳' : '🔄'; }
             function showError(t, m) { const e = t === 'main' ? elements.mainError : elements.settingsError; e.innerHTML = m.replace(/\n/g, '<br>'); e.classList.remove('hidden'); }
             function hideError(t) { const e = t === 'main' ? elements.mainError : elements.settingsError; e.classList.add('hidden'); }
-
             function setupEventListeners() {
                 elements.openSettingsBtn.addEventListener('click', openSettings);
                 elements.closeSettingsBtn.addEventListener('click', closeSettings);
@@ -198,7 +142,6 @@
                 elements.monthFilter.addEventListener('change', e => { state.filters.month = e.target.value; renderContent(); });
                 elements.content.addEventListener('click', e => { const h = e.target.closest('[data-toggle-index]'); if (h) { const d = h.nextElementSibling; const a = h.querySelector('.arrow-icon'); d.classList.toggle('open'); a.classList.toggle('open'); } });
             }
-
             function initializeApp() { setupEventListeners(); elements.refreshInterval.value = localStorage.getItem('refreshInterval') || '30'; state.scriptUrl = getInitialUrl(); if (state.scriptUrl) { loadData(); updateAutoRefresh(); } else { openSettings(); } }
             try { initializeApp(); } 
             catch (e) { console.error("Critical error:", e); if (elements.content) elements.content.innerHTML = `<div class="p-6 bg-rose-100 border-l-4 border-rose-500 text-rose-700 rounded-lg"><h3 class="font-bold text-lg mb-2">เกิดข้อผิดพลาด</h3><p>${e.message}</p></div>`; }
