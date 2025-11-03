@@ -42,9 +42,10 @@
     const fbStore = getFirestore(fbApp);
     const googleProvider = new GoogleAuthProvider();
 
-    // ======== 🎵 1. เพิ่มตัวแปรเสียงแจ้งเตือน ========
+    // ======== 🎵 1. เพิ่มตัวแปรเสียง และ "ธง" สถานะ ========
     const notificationSound = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-software-interface-start-2574.mp3');
     notificationSound.preload = 'auto';
+    let isAudioUnlocked = false; // <-- ตัวแปรใหม่สำหรับเช็กสถานะ
 
 
     // =============================================
@@ -73,20 +74,31 @@
         
         chatWidget.classList.remove('hidden'); 
 
-        // ======== 🎵 2. อัปเดตฟังก์ชัน "คลิก" ล็อกอิน ========
-        chatLoginBtn.addEventListener('click', () => {
-            
-            // "ปลดล็อก" เสียงโดยการเล่นและหยุดทันที (จำเป็นสำหรับ Autoplay Policy)
-            try {
-                notificationSound.play().then(() => {
-                    notificationSound.pause();
-                    notificationSound.currentTime = 0;
-                }).catch(e => {
-                    console.log("Audio context unlock failed, but that's okay.");
-                });
-            } catch (e) { /* ignore */ }
+        // ======== 🎵 2. อัปเดต: ฟังก์ชันปลดล็อกเสียงแบบ Global ========
+        function unlockAudio() {
+            if (isAudioUnlocked) return; // ถ้าปลดล็อกแล้ว ก็ไม่ต้องทำอีก
 
-            // ดำเนินการล็อกอิน
+            notificationSound.play().then(() => {
+                notificationSound.pause();
+                notificationSound.currentTime = 0;
+                isAudioUnlocked = true; // ตั้งสถานะว่า "ปลดล็อกแล้ว"
+                console.log("Audio context unlocked by user interaction.");
+                // เมื่อปลดล็อกสำเร็จ ให้ลบ Liseners ทิ้ง (เพื่อประสิทธิภาพ)
+                document.body.removeEventListener('click', unlockAudio);
+                document.body.removeEventListener('keydown', unlockAudio);
+            }).catch(e => {
+                // ครั้งแรกอาจจะเฟล ไม่เป็นไร เดี๋ยวคลิก/พิมพ์ครั้งหน้าก็ลองใหม่
+            });
+        }
+
+        // เพิ่ม Event Listeners ให้ทำงานเมื่อมีการคลิกหรือพิมพ์ "ครั้งแรก"
+        document.body.addEventListener('click', unlockAudio);
+        document.body.addEventListener('keydown', unlockAudio);
+
+
+        // ======== 🎵 3. แก้ไข: ลบโค้ดปลดล็อกออกจากปุ่ม Login ========
+        chatLoginBtn.addEventListener('click', () => {
+            // (โค้ดปลดล็อกเสียงถูกย้ายไปที่ Global Listeners แล้ว)
             signInWithPopup(fbAuth, googleProvider).catch(error => {
                 console.error("Login failed:", error);
             });
@@ -152,9 +164,10 @@
                         
                         renderMessage(data); 
 
+                        // โค้ดเล่นเสียงจะทำงานได้ ก็ต่อเมื่อ isAudioUnlocked เป็น true แล้ว
                         if (!isInitialLoad && currentUser && data.uid !== currentUser.uid) {
                             notificationSound.play().catch(e => {
-                                console.log("Audio play failed:", e.message);
+                                console.log("Audio play failed (maybe unlock first):", e.message);
                             });
                         }
                     }
@@ -343,7 +356,7 @@
             elements.refreshInterval.addEventListener('change', updateAutoRefresh);
             elements.clearFiltersBtn.addEventListener('click', clearAllFilters);
             elements.customerFilter.addEventListener('change', e => { state.filters.customer = e.target.value; renderContent(); });
-            elements.testerFilter.addEventListener('click', e => { state.filters.tester = e.target.value; renderContent(); });
+            elements.testerFilter.addEventListener('change', e => { state.filters.tester = e.target.value; renderContent(); });
             elements.salespersonFilter.addEventListener('change', e => { state.filters.salesperson = e.target.value; renderContent(); });
             elements.statusFilter.addEventListener('change', e => { state.filters.status = e.target.value; renderContent(); });
             elements.monthFilter.addEventListener('change', e => { state.filters.month = e.target.value; renderContent(); });
@@ -364,5 +377,3 @@
         // --- โค้ด DASHBOARD เดิมของคุณ END ---
     });
 </script>
-</body>
-</html>
