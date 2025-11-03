@@ -509,7 +509,12 @@
                 elements.refreshInterval.addEventListener('change', updateAutoRefresh);
                 elements.clearFiltersBtn.addEventListener('click', clearAllFilters);
                 elements.customerFilter.addEventListener('change', e => { state.filters.customer = e.target.value; renderContent(); });
-                elements.testerFilter.addEventListener('change', e => { state.filters.tester = e.target.value; renderContent(); }); // <--- แก้ 'click' เป็น 'change'
+                
+                // ======== ★★★★★ นี่คือจุดที่แก้ไข (อีกจุด) ★★★★★ ========
+                // แก้บั๊ก 'click' ที่ผมเผลอใส่เข้าไปใน filter
+                elements.testerFilter.addEventListener('change', e => { state.filters.tester = e.target.value; renderContent(); }); 
+                // =============================================
+
                 elements.salespersonFilter.addEventListener('change', e => { state.filters.salesperson = e.target.value; renderContent(); });
                 elements.statusFilter.addEventListener('change', e => { state.filters.status = e.target.value; renderContent(); });
                 elements.monthFilter.addEventListener('change', e => { state.filters.month = e.target.value; renderContent(); });
