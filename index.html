@@ -43,40 +43,6 @@
         .chat-input button:disabled { background: #ccc; }
         .chat-signin { padding: 2rem; text-align: center; background: #fff; }
         .chat-signin button { background: #4285F4; color: white; padding: 0.75rem 1.5rem; border-radius: 0.5rem; font-weight: 600; cursor: pointer; }
-        
-        /* ▼▼▼ CSS ใหม่สำหรับห้อง ▼▼▼ */
-        .room-selector {
-            padding: 0.5rem 0.75rem;
-            background: #f3f4f6;
-            border-bottom: 1px solid #e5e7eb;
-            display: flex;
-            gap: 0.5rem;
-            align-items: center;
-        }
-        .room-btn {
-            padding: 0.25rem 0.75rem;
-            border-radius: 0.5rem;
-            font-size: 0.875rem;
-            font-weight: 600;
-            color: #4b5563;
-            background: #e5e7eb;
-            transition: all 0.2s;
-        }
-        .room-btn.active {
-            background: #667eea;
-            color: white;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-
-        .typing-indicator {
-            min-height: 1.5rem; 
-            font-style: italic;
-            color: #6b7280;
-            padding: 0.25rem 1rem 0.1rem;
-            background: #fff;
-            border-top: 1px solid #e5e7eb;
-            transition: opacity 0.3s;
-        }
         /* ======== 💬 CSS สำหรับแชท END ======== */
     </style>
 </head>
@@ -117,20 +83,11 @@
             </div>
             
             <div id="chatMain" class="hidden">
-                
-                <div id="roomSelector" class="room-selector">
-                    <span class="font-semibold text-sm text-gray-700">ห้อง:</span>
-                    <button data-room="general" class="room-btn active">ทั่วไป</button>
-                    <button data-room="projects" class="room-btn">โครงการ</button>
-                </div>
-
                 <div class="chat-body">
                     <div id="chatMessages" class="chat-messages">
                         </div>
                 </div>
                 
-                <div id="typingIndicator" class="typing-indicator"></div>
-
                 <form id="chatForm" class="chat-input">
                     <input type="text" id="chatInput" placeholder="พิมพ์ข้อความ..." autocomplete="off" />
                     <button type="submit" id="chatSendBtn">ส่ง</button>
@@ -142,14 +99,14 @@
         // =============================================
         // 🔥 FIREBASE v12 IMPORTS
         // =============================================
-        import { initializeApp } from "https.gstatic.com/firebasejs/12.5.0/firebase-app.js";
-        import { getAnalytics } from "https.gstatic.com/firebasejs/12.5.0/firebase-analytics.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-app.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-analytics.js";
         import {
             getAuth,
             onAuthStateChanged,
             GoogleAuthProvider,
             signInWithPopup
-        } from "https.gstatic.com/firebasejs/12.5.0/firebase-auth.js";
+        } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-auth.js";
         import {
             getFirestore,
             collection,
@@ -158,10 +115,8 @@
             query,
             orderBy,
             limit,
-            onSnapshot,
-            doc,
-            setDoc,
-            deleteDoc
+            onSnapshot
+            // (ไม่มี doc, setDoc, deleteDoc)
         } from "https.gstatic.com/firebasejs/12.5.0/firebase-firestore.js";
 
         
@@ -190,12 +145,7 @@
         notificationSound.preload = 'auto';
         let isAudioUnlocked = false; 
 
-        // ======== ✍️ 1. ตัวแปรสำหรับแชท (อัปเกรด) ========
-        let currentRoomId = 'general'; // <--- ★★★ สถานะห้องปัจจุบัน ★★★
-        let typingTimeout = null;
-        let unsubscribeMessages = null; // <--- listener สำหรับข้อความ
-        let unsubscribeTyping = null; // <--- listener สำหรับการพิมพ์
-
+        // (ไม่มีตัวแปร Typing)
 
         // =============================================
         // 🚀 โค้ดทั้งหมดของแอป (Dashboard + Chat)
@@ -208,6 +158,7 @@
             // 🔥 ส่วนของ FIREBASE CHAT
             // =============================================
             let currentUser = null;
+            let unsubscribeMessages = null; 
 
             const chatWidget = document.getElementById('chatWidget');
             const chatHeader = document.getElementById('chatHeader');
@@ -219,8 +170,7 @@
             const chatMessages = document.getElementById('chatMessages');
             const chatForm = document.getElementById('chatForm');
             const chatInput = document.getElementById('chatInput');
-            const typingIndicator = document.getElementById('typingIndicator');
-            const roomSelector = document.getElementById('roomSelector'); // <--- UI ใหม่
+            // (ไม่มี typingIndicator)
             
             chatWidget.classList.remove('hidden'); 
 
@@ -246,42 +196,15 @@
                 });
             });
 
-            // ======== ✍️ 2. ฟังก์ชันสำหรับ Typing Indicator (อัปเกรด) ========
-            async function stopTyping() {
-                if (!currentUser) return;
-                try {
-                    // ★★★ ใช้ currentRoomId ★★★
-                    await deleteDoc(doc(fbStore, 'rooms', currentRoomId, 'typingStatus', currentUser.uid));
-                } catch (e) { console.error("Could not delete typing status:", e); }
-                typingTimeout = null;
-            }
+            // (ไม่มีฟังก์ชัน Typing)
 
-            function notifyUserTyping() {
-                if (!currentUser) return;
-                if (typingTimeout) {
-                    clearTimeout(typingTimeout);
-                }
-                // ★★★ ใช้ currentRoomId ★★★
-                const typingRef = doc(fbStore, 'rooms', currentRoomId, 'typingStatus', currentUser.uid);
-                setDoc(typingRef, {
-                    name: currentUser.displayName || currentUser.email.split('@')[0],
-                    uid: currentUser.uid,
-                    timestamp: serverTimestamp()
-                }).catch(e => console.error("Could not set typing status:", e));
-                typingTimeout = setTimeout(stopTyping, 3000);
-            }
-
-            chatInput.addEventListener('keydown', notifyUserTyping);
-
-
-            // จัดการการส่งข้อความ (อัปเกรด)
+            // จัดการการส่งข้อความ
             chatForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 const text = chatInput.value.trim();
                 if (text && currentUser) {
                     try {
-                        // ★★★ ใช้ currentRoomId ★★★
-                        await addDoc(collection(fbStore, 'rooms', currentRoomId, 'messages'), {
+                        await addDoc(collection(fbStore, 'messages'), {
                             text: text,
                             name: currentUser.displayName || currentUser.email,
                             email: currentUser.email,
@@ -289,8 +212,6 @@
                             createdAt: serverTimestamp()
                         });
                         chatInput.value = ''; 
-                        if (typingTimeout) clearTimeout(typingTimeout);
-                        stopTyping(); 
                     } catch (err) {
                         console.error("Error sending message:", err);
                     }
@@ -303,15 +224,11 @@
                     currentUser = user;
                     chatSignIn.classList.add('hidden');
                     chatMain.classList.remove('hidden');
-                    // เริ่มฟังที่ห้อง Default
-                    listenToMessages(currentRoomId);
-                    listenToTypingStatus(currentRoomId); 
-                    // ตั้งค่าปุ่มเปลี่ยนห้อง
-                    setupRoomSwitcher();
+                    listenToMessages();
+                    // (ไม่มี listenToTypingStatus)
                 } else {
-                    // หยุด listener ทั้งหมด
                     if (unsubscribeMessages) unsubscribeMessages();
-                    if (unsubscribeTyping) unsubscribeTyping(); 
+                    // (ไม่มี unsubscribeTyping)
                     
                     currentUser = null;
                     chatSignIn.classList.remove('hidden');
@@ -320,17 +237,11 @@
                 }
             });
             
-            // ฟังก์ชันดึง/ฟังข้อความ (อัปเกรด: รับ roomId)
-            function listenToMessages(roomId) {
-                // หยุด listener เก่า (ถ้ามี)
+            // ฟังก์ชันดึง/ฟังข้อความ
+            function listenToMessages() {
                 if (unsubscribeMessages) unsubscribeMessages();
-                
-                chatMessages.innerHTML = ''; // ล้างข้อความเก่า
                 let isInitialLoad = true;
-                
-                // ★★★ ใช้ roomId ★★★
-                const messagesQuery = query(collection(fbStore, 'rooms', roomId, 'messages'), orderBy('createdAt', 'desc'), limit(50));
-                
+                const messagesQuery = query(collection(fbStore, 'messages'), orderBy('createdAt', 'desc'), limit(50));
                 unsubscribeMessages = onSnapshot(messagesQuery, snapshot => {
                     if (isInitialLoad) chatMessages.innerHTML = '';
                     snapshot.docChanges().reverse().forEach(change => {
@@ -347,69 +258,7 @@
                 }, error => console.error("Error listening to messages:", error));
             }
 
-            // ฟังก์ชัน "ฟัง" สถานะการพิมพ์ (อัปเกรด: รับ roomId)
-            function listenToTypingStatus(roomId) {
-                // หยุด listener เก่า (ถ้ามี)
-                if (unsubscribeTyping) unsubscribeTyping();
-
-                typingIndicator.textContent = ''; // ล้างสถานะเก่า
-
-                // ★★★ ใช้ roomId ★★★
-                const typingQuery = query(collection(fbStore, 'rooms', roomId, 'typingStatus'));
-                
-                unsubscribeTyping = onSnapshot(typingQuery, (snapshot) => {
-                    if (!currentUser) return;
-                    const typers = [];
-                    const now = new Date();
-                    snapshot.forEach(doc => {
-                        const data = doc.data();
-                        const docTime = data.timestamp?.toDate();
-                        if (!docTime || (now - docTime) / 1000 > 10) {
-                            deleteDoc(doc.ref);
-                            return;
-                        }
-                        if (data.uid !== currentUser.uid) {
-                            typers.push(data.name);
-                        }
-                    });
-                    if (typers.length === 0) {
-                        typingIndicator.textContent = '';
-                    } else if (typers.length === 1) {
-                        typingIndicator.textContent = `${typers[0]} กำลังพิมพ์...`;
-                    } else {
-                        typingIndicator.textContent = `${typers.join(', ')} กำลังพิมพ์...`;
-                    }
-                });
-            }
-
-            // ======== 🔀 ฟังก์ชันใหม่: จัดการการเปลี่ยนห้อง ========
-            function setupRoomSwitcher() {
-                const roomButtons = roomSelector.querySelectorAll('.room-btn');
-                roomButtons.forEach(button => {
-                    button.addEventListener('click', () => {
-                        const newRoomId = button.dataset.room;
-                        if (newRoomId === currentRoomId) return; // อยู่ห้องนี้แล้ว
-
-                        // 1. อัปเดต State
-                        currentRoomId = newRoomId;
-
-                        // 2. อัปเดต UI (ปุ่ม)
-                        roomButtons.forEach(btn => btn.classList.remove('active'));
-                        button.classList.add('active');
-
-                        // 3. หยุดพิมพ์ในห้องเก่า (ถ้ากำลังพิมพ์อยู่)
-                        if (typingTimeout) clearTimeout(typingTimeout);
-                        stopTyping(); // stopTyping() จะใช้ currentRoomId (ซึ่งเป็น ID เก่า) ไม่ได้ ต้องแก้
-                        // แก้ไข: stopTyping() ใช้ currentRoomId ที่เป็น ID ใหม่ไปแล้ว
-                        // เราต้อง stopTyping ในห้องเก่า... แต่เพื่อความง่าย, เราจะปล่อยให้มัน timeout ไปเอง
-                        // และเริ่มฟังห้องใหม่
-                        
-                        // 4. สลับ Listener ไปยังห้องใหม่
-                        listenToMessages(currentRoomId);
-                        listenToTypingStatus(currentRoomId);
-                    });
-                });
-            }
+            // (ไม่มี listenToTypingStatus)
             
             // ฟังก์ชันแสดงผลข้อความ
             function renderMessage(data) {
@@ -557,10 +406,10 @@
             function getStatusColorClass(s) { s=(s||'').toLowerCase();if(s.includes('ไม่ผ่าน'))return'bg-gradient-to-r from-rose-500 to-red-600 text-white';if(s.includes('ผ่าน'))return'bg-gradient-to-r from-emerald-500 to-green-600 text-white';return'bg-gradient-to-r from-slate-400 to-gray-500 text-white';}
             function getStatusBorderColor(s) { s=(s||'').toLowerCase();if(s.includes('ไม่ผ่าน'))return'border-rose-500';if(s.includes('ผ่าน'))return'border-emerald-500';return'border-slate-400';}
             
-            // ★★★ โค้ดที่แก้ไขแล้ว ไม่มี 'Pos' ★★★
+            // ======== ★★★★★ โค้ดที่ถูกต้อง (ไม่มี Pos) ★★★★★ ========
             function openSettings() { elements.urlInput.value = state.scriptUrl || ''; elements.settingsModal.classList.remove('hidden'); }
             function closeSettings() { elements.settingsModal.classList.add('hidden'); }
-            // ★★★★★★★★★★★★★★★★★★★★★★★★★
+            // ================================================
 
             function saveSettings() { const u = elements.urlInput.value.trim(); if (!u) { showError('settings', 'กรุณาใส่ URL'); return; } if (!u.endsWith('/exec')) { showError('settings', 'URL ไม่ถูกต้อง'); return; } state.scriptUrl = u; localStorage.setItem('scriptUrl', u); closeSettings(); loadData(); updateAutoRefresh(); }
             function updateAutoRefresh() { const s = parseInt(elements.refreshInterval.value, 10); localStorage.setItem('refreshInterval', s); if (state.autoRefreshTimer) clearInterval(state.autoRefreshTimer); if (s > 0) state.autoRefreshTimer = setInterval(loadData, s * 1000); }
@@ -588,8 +437,9 @@
                 elements.clearFiltersBtn.addEventListener('click', clearAllFilters);
                 elements.customerFilter.addEventListener('change', e => { state.filters.customer = e.target.value; renderContent(); });
                 
-                // ★★★ แก้ไข testerFilter กลับเป็น 'change' ★★★
+                // ======== ★★★★★ แก้ไข 'click' เป็น 'change' ★★★★★ ========
                 elements.testerFilter.addEventListener('change', e => { state.filters.tester = e.target.value; renderContent(); }); 
+                // ==================================================
 
                 elements.salespersonFilter.addEventListener('change', e => { state.filters.salesperson = e.target.value; renderContent(); });
                 elements.statusFilter.addEventListener('change', e => { state.filters.status = e.target.value; renderContent(); });
