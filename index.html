@@ -43,6 +43,17 @@
         .chat-input button:disabled { background: #ccc; }
         .chat-signin { padding: 2rem; text-align: center; background: #fff; }
         .chat-signin button { background: #4285F4; color: white; padding: 0.75rem 1.5rem; border-radius: 0.5rem; font-weight: 600; cursor: pointer; }
+        
+        /* CSS สำหรับ Typing Indicator */
+        .typing-indicator {
+            min-height: 1.5rem; /* จองพื้นที่ไว้เล็กน้อย */
+            font-style: italic;
+            color: #6b7280;
+            padding: 0.25rem 1rem 0.1rem;
+            background: #fff;
+            border-top: 1px solid #e5e7eb;
+            transition: opacity 0.3s;
+        }
         /* ======== 💬 CSS สำหรับแชท END ======== */
     </style>
 </head>
@@ -50,7 +61,8 @@
     <div class="max-w-7xl mx-auto">
         
         <div id="settingsModal" class="hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
-            <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-lg w-full">
+   
+            <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-lg w-full">
                <div class="flex items-center gap-3 mb-6"><div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center text-white text-xl">⚙️</div><h2 class="text-2xl font-bold text-gray-800">ตั้งค่า</h2></div>
                <div class="mb-6"><label class="block text-sm font-semibold text-gray-700 mb-3">Apps Script URL</label><input type="text" id="urlInput" placeholder="https://script.google.com/macros/s/.../exec" class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors bg-gray-50"/></div>
                <div id="settingsError" class="hidden mb-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 text-sm rounded-r-lg"></div>
@@ -59,12 +71,12 @@
         </div>
         
         <div class="mb-8">
-            <div class="header-gradient rounded-2xl shadow-2xl p-8 text-white"><div class="flex items-start justify-between gap-4 mb-6 flex-wrap"><div><h1 class="text-4xl font-bold mb-2 flex items-center gap-3"><span class="text-5xl">📊</span> BEV Dashboard Test Product & PM Engineer</h1><p class="text-white text-opacity-90 text-sm hidden"></p></div><div class="flex gap-3 flex-wrap"><a href="https://docs.google.com/spreadsheets/d/1K5532IFh_zpI_ZI7TcDedyYedztRvRMEXcdo3BSBvXA/edit?usp=sharing" target="_blank" class="pulse-glow bg-gradient-to-r from-green-400 to-green-600 hover:from-green-500 hover:to-green-700 text-white px-6 py-3 rounded-xl font-bold flex items-center gap-3 shadow-2xl transform hover:scale-105 transition-all"><span class="text-2xl">📜</span><span>เปิด Google Sheet</span></a><button id="refreshBtn" class="bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-4 py-2.5 rounded-lg font-semibold flex items-center gap-2 transition-all"><span>🔄</span> รีเฟรช</button><button id="openSettingsBtn" class="bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-4 py-2.5 rounded-lg font-semibold flex items-center gap-2 transition-all"><span>⚙️</span> ตั้งค่า</button></div></div><div class="bg-black bg-opacity-20 rounded-xl p-4 backdrop-blur-sm"><div class="flex items-center justify-between flex-wrap gap-4"><div class="flex items-center gap-3 hidden"><span class="text-2xl">⏱️</span><span class="font-semibold">รีเฟรชอัตโนมัติ:</span></div><select id="refreshInterval" class="bg-white text-gray-900 border-0 rounded-lg px-4 py-2 text-sm focus:outline-none font-semibold shadow-lg"><option value="0">ปิด</option><option value="30" selected>30 วินาที</option><option value="60">1 นาที</option><option value="120">2 นาที</option></select></div></div></div>
+                       <div class="header-gradient rounded-2xl shadow-2xl p-8 text-white"><div class="flex items-start justify-between gap-4 mb-6 flex-wrap"><div><h1 class="text-4xl font-bold mb-2 flex items-center gap-3"><span class="text-5xl">📊</span> BEV Dashboard Test Product & PM Engineer</h1><p class="text-white text-opacity-90 text-sm hidden"></p></div><div class="flex gap-3 flex-wrap"><a href="https://docs.google.com/spreadsheets/d/1K5532IFh_zpI_ZI7TcDedyYedztRvRMEXcdo3BSBvXA/edit?usp=sharing" target="_blank" class="pulse-glow bg-gradient-to-r from-green-400 to-green-600 hover:from-green-500 hover:to-green-700 text-white px-6 py-3 rounded-xl font-bold flex items-center gap-3 shadow-2xl transform hover:scale-105 transition-all"><span class="text-2xl">📜</span><span>เปิด Google Sheet</span></a><button id="refreshBtn" class="bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-4 py-2.5 rounded-lg font-semibold flex items-center gap-2 transition-all"><span>🔄</span> รีเฟรช</button><button id="openSettingsBtn" class="bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-4 py-2.5 rounded-lg font-semibold flex items-center gap-2 transition-all"><span>⚙️</span> ตั้งค่า</button></div></div><div class="bg-black bg-opacity-20 rounded-xl p-4 backdrop-blur-sm"><div class="flex items-center justify-between flex-wrap gap-4"><div class="flex items-center gap-3 hidden"><span class="text-2xl">⏱️</span><span class="font-semibold">รีเฟรชอัตโนมัติ:</span></div><select id="refreshInterval" class="bg-white text-gray-900 border-0 rounded-lg px-4 py-2 text-sm focus:outline-none font-semibold shadow-lg"><option value="0">ปิด</option><option value="30" selected>30 วินาที</option><option value="60">1 นาที</option><option value="120">2 นาที</option></select></div></div></div>
             <div id="mainError" class="hidden mt-4 p-4 bg-red-100 border-l-4 border-red-500 text-red-700 text-sm rounded-lg shadow-lg"></div>
         </div>
         
         <div class="mb-8">
-            <div class="bg-white rounded-2xl shadow-lg p-6"><div class="flex items-center justify-between mb-4"><h2 class="text-xl font-bold text-gray-800 flex items-center gap-2"><span class="text-2xl">🔍</span> กรองข้อมูล</h2><button id="clearFiltersBtn" class="text-sm text-indigo-600 hover:text-indigo-800 font-semibold px-4 py-2 rounded-lg hover:bg-indigo-50 transition-all">ล้างทั้งหมด</button></div><div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4"><div class="relative"><span class="filter-icon">👤</span><select id="customerFilter" class="filter-box w-full px-4 py-3.5 bg-gray-50 text-gray-900 border-2 border-gray-200 rounded-xl focus:outline-none focus:bg-white transition-all font-medium"><option value="">ทุกลูกค้า</option></select></div><div class="relative"><span class="filter-icon">🧪</span><select id="testerFilter" class="filter-box w-full px-4 py-3.5 bg-gray-50 text-gray-900 border-2 border-gray-200 rounded-xl focus:outline-none focus:bg-white transition-all font-medium"><option value="">ทุกผู้ทดสอบ</option></select></div><div class="relative"><span class="filter-icon">💼</span><select id="salespersonFilter" class="filter-box w-full px-4 py-3.5 bg-gray-50 text-gray-900 border-2 border-gray-200 rounded-xl focus:outline-none focus:bg-white transition-all font-medium"><option value="">ทุกเซลล์</option></select></div><div class="relative"><span class="filter-icon">✓</span><select id="statusFilter" class="filter-box w-full px-4 py-3.5 bg-gray-50 text-gray-900 border-2 border-gray-200 rounded-xl focus:outline-none focus:bg-white transition-all font-medium"><option value="">ทุกสถานะ</option><option value="ผ่าน">✓ ผ่าน</option><option value="ไม่ผ่าน">✕ ไม่ผ่าน</option><option value="รอทดสอบ">◌ รอทดสอบ</option></select></div><div class="relative"><span class="filter-icon">📅</span><select id="monthFilter" class="filter-box w-full px-4 py-3.5 bg-gray-50 text-gray-900 border-2 border-gray-200 rounded-xl focus:outline-none focus:bg-white transition-all font-medium"><option value="">ทุกเดือน (PM)</option><option value="ม.ค.">มกราคม</option><option value="ก.พ.">กุมภาพันธ์</option><option value="มี.ค.">มีนาคม</option><option value="เม.ย.">เมษายน</option><option value="พ.ค.">พฤษภาคม</option><option value="มิ.ย.">มิถุนายน</option><option value="ก.ค.">กรกฎาคม</option><option value="ส.ค.">สิงหาคม</option><option value="ก.ย.">กันยายน</option><option value="ต.ค.">ตุลาคม</option><option value="พ.ย.">พฤศจิกายน</option><option value="ธ.ค.">ธันวาคม</option></select></div></div><div id="activeFilters" class="hidden mt-4 pt-4 border-t border-gray-200"><div class="flex flex-wrap gap-2" id="activeFiltersList"></div></div></div>
+                       <div class="bg-white rounded-2xl shadow-lg p-6"><div class="flex items-center justify-between mb-4"><h2 class="text-xl font-bold text-gray-800 flex items-center gap-2"><span class="text-2xl">🔍</span> กรองข้อมูล</h2><button id="clearFiltersBtn" class="text-sm text-indigo-600 hover:text-indigo-800 font-semibold px-4 py-2 rounded-lg hover:bg-indigo-50 transition-all">ล้างทั้งหมด</button></div><div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4"><div class="relative"><span class="filter-icon">👤</span><select id="customerFilter" class="filter-box w-full px-4 py-3.5 bg-gray-50 text-gray-900 border-2 border-gray-200 rounded-xl focus:outline-none focus:bg-white transition-all font-medium"><option value="">ทุกลูกค้า</option></select></div><div class="relative"><span class="filter-icon">🧪</span><select id="testerFilter" class="filter-box w-full px-4 py-3.5 bg-gray-50 text-gray-900 border-2 border-gray-200 rounded-xl focus:outline-none focus:bg-white transition-all font-medium"><option value="">ทุกผู้ทดสอบ</option></select></div><div class="relative"><span class="filter-icon">💼</span><select id="salespersonFilter" class="filter-box w-full px-4 py-3.5 bg-gray-50 text-gray-900 border-2 border-gray-200 rounded-xl focus:outline-none focus:bg-white transition-all font-medium"><option value="">ทุกเซลล์</option></select></div><div class="relative"><span class="filter-icon">✓</span><select id="statusFilter" class="filter-box w-full px-4 py-3.5 bg-gray-50 text-gray-900 border-2 border-gray-200 rounded-xl focus:outline-none focus:bg-white transition-all font-medium"><option value="">ทุกสถานะ</option><option value="ผ่าน">✓ ผ่าน</option><option value="ไม่ผ่าน">✕ ไม่ผ่าน</option><option value="รอทดสอบ">◌ รอทดสอบ</option></select></div><div class="relative"><span class="filter-icon">📅</span><select id="monthFilter" class="filter-box w-full px-4 py-3.5 bg-gray-50 text-gray-900 border-2 border-gray-200 rounded-xl focus:outline-none focus:bg-white transition-all font-medium"><option value="">ทุกเดือน (PM)</option><option value="ม.ค.">มกราคม</option><option value="ก.พ.">กุมภาพันธ์</option><option value="มี.ค.">มีนาคม</option><option value="เม.ย.">เมษายน</option><option value="พ.ค.">พฤษภาคม</option><option value="มิ.ย.">มิถุนายน</option><option value="ก.ค.">กรกฎาคม</option><option value="ส.ค.">สิงหาคม</option><option value="ก.ย.">กันยายน</option><option value="ต.ค.">ตุลาคม</option><option value="พ.ย.">พฤศจิกายน</option><option value="ธ.ค.">ธันวาคม</option></select></div></div><div id="activeFilters" class="hidden mt-4 pt-4 border-t border-gray-200"><div class="flex flex-wrap gap-2" id="activeFiltersList"></div></div></div>
         </div>
         
         <div id="content" class="space-y-4"></div>
@@ -87,6 +99,9 @@
                     <div id="chatMessages" class="chat-messages">
                         </div>
                 </div>
+                
+                <div id="typingIndicator" class="typing-indicator"></div>
+
                 <form id="chatForm" class="chat-input">
                     <input type="text" id="chatInput" placeholder="พิมพ์ข้อความ..." autocomplete="off" />
                     <button type="submit" id="chatSendBtn">ส่ง</button>
@@ -98,14 +113,14 @@
         // =============================================
         // 🔥 FIREBASE v12 IMPORTS
         // =============================================
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-app.js";
-        import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-analytics.js";
+        import { initializeApp } from "https.gstatic.com/firebasejs/12.5.0/firebase-app.js";
+        import { getAnalytics } from "https.gstatic.com/firebasejs/12.5.0/firebase-analytics.js";
         import {
             getAuth,
             onAuthStateChanged,
             GoogleAuthProvider,
             signInWithPopup
-        } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-auth.js";
+        } from "https.gstatic.com/firebasejs/12.5.0/firebase-auth.js";
         import {
             getFirestore,
             collection,
@@ -114,8 +129,12 @@
             query,
             orderBy,
             limit,
-            onSnapshot
-        } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-firestore.js";
+            onSnapshot,
+            // ▼▼▼ Imports ใหม่สำหรับ Typing ▼▼▼
+            doc,
+            setDoc,
+            deleteDoc
+        } from "https.gstatic.com/firebasejs/12.5.0/firebase-firestore.js";
 
         
         // =============================================
@@ -138,11 +157,14 @@
         const fbStore = getFirestore(fbApp);
         const googleProvider = new GoogleAuthProvider();
 
-        // ======== 🎵 1. ★★★★★ นี่คือส่วนที่แก้ไข ★★★★★ ========
-        // เปลี่ยนเป็นไฟล์เสียง 'notify.mp3' ที่อยู่ใน GitHub Pages
-        const notificationSound = new Audio('notify.mp3');
+        // ======== 🎵 1. โค้ดเสียง (ใช้ไฟล์จาก GitHub) ========
+        const notificationSound = new Audio('notify.mp3'); 
         notificationSound.preload = 'auto';
         let isAudioUnlocked = false; 
+
+        // ======== ✍️ 1. ตัวแปรสำหรับ Typing Indicator ========
+        let typingTimeout = null;
+        let unsubscribeTyping = null;
 
 
         // =============================================
@@ -168,29 +190,22 @@
             const chatMessages = document.getElementById('chatMessages');
             const chatForm = document.getElementById('chatForm');
             const chatInput = document.getElementById('chatInput');
+            // ▼▼▼ Element ใหม่ ▼▼▼
+            const typingIndicator = document.getElementById('typingIndicator');
             
             chatWidget.classList.remove('hidden'); 
 
-            // ======== 🎵 2. ฟังก์ชันปลดล็อกเสียง (เหมือนเดิม) ========
+            // ======== 🎵 2. ฟังก์ชันปลดล็อกเสียง ========
             function unlockAudio() {
                 if (isAudioUnlocked) return; 
-                
-                console.log("User interaction detected, attempting to unlock audio...");
-                isAudioUnlocked = true; // <-- ตั้งธงเป็น true ทันที
-
+                isAudioUnlocked = true;
                 notificationSound.play().then(() => {
                     notificationSound.pause();
                     notificationSound.currentTime = 0;
-                    console.log("Audio primed successfully.");
-                }).catch(e => {
-                    // ไฟล์ MP3 ที่ยาวพอ จะไม่ขึ้น "interrupted"
-                    console.log("Audio priming failed (this is OK):", e.message); 
-                });
-
+                }).catch(e => {});
                 document.body.removeEventListener('click', unlockAudio, true);
                 document.body.removeEventListener('keydown', unlockAudio, true);
             }
-
             document.body.addEventListener('click', unlockAudio, true);
             document.body.addEventListener('keydown', unlockAudio, true);
 
@@ -202,12 +217,50 @@
                 });
             });
 
+            // ======== ✍️ 2. ฟังก์ชันสำหรับ Typing Indicator ========
+
+            // ฟังก์ชัน: เมื่อ "หยุดพิมพ์"
+            async function stopTyping() {
+                if (!currentUser) return;
+                // ลบเอกสารสถานะการพิมพ์ของเรา
+                try {
+                    await deleteDoc(doc(fbStore, 'typingStatus', currentUser.uid));
+                } catch (e) { console.error("Could not delete typing status:", e); }
+                typingTimeout = null;
+            }
+
+            // ฟังก์ชัน: เมื่อ "กำลังพิมพ์"
+            function notifyUserTyping() {
+                if (!currentUser) return;
+                
+                // 1. เคลียร์ Timeout เก่า (ถ้ามี)
+                if (typingTimeout) {
+                    clearTimeout(typingTimeout);
+                }
+                
+                // 2. อัปเดตสถานะของเรา (หรือสร้างใหม่)
+                const typingRef = doc(fbStore, 'typingStatus', currentUser.uid);
+                setDoc(typingRef, {
+                    name: currentUser.displayName || currentUser.email.split('@')[0],
+                    uid: currentUser.uid,
+                    timestamp: serverTimestamp() // เพื่อเช็กเอกสารเก่าค้าง
+                }).catch(e => console.error("Could not set typing status:", e));
+
+                // 3. ตั้ง Timeout ใหม่ 3 วินาที (ถ้าไม่พิมพ์ต่อ จะเรียก stopTyping)
+                typingTimeout = setTimeout(stopTyping, 3000);
+            }
+
+            // 4. ดักฟังการพิมพ์ในช่องแชท
+            chatInput.addEventListener('keydown', notifyUserTyping);
+
+
             // จัดการการส่งข้อความ
             chatForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 const text = chatInput.value.trim();
                 if (text && currentUser) {
                     try {
+                        // ส่งข้อความ
                         await addDoc(collection(fbStore, 'messages'), {
                             text: text,
                             name: currentUser.displayName || currentUser.email,
@@ -216,6 +269,11 @@
                             createdAt: serverTimestamp()
                         });
                         chatInput.value = ''; 
+                        
+                        // ▼▼▼ หยุดพิมพ์ทันที ▼▼▼
+                        if (typingTimeout) clearTimeout(typingTimeout);
+                        stopTyping(); 
+
                     } catch (err) {
                         console.error("Error sending message:", err);
                     }
@@ -229,55 +287,76 @@
                     chatSignIn.classList.add('hidden');
                     chatMain.classList.remove('hidden');
                     listenToMessages();
+                    listenToTypingStatus(); // <-- ▼▼▼ เริ่มฟังสถานะการพิมพ์ ▼▼▼
                 } else {
+                    if (unsubscribeMessages) unsubscribeMessages();
+                    if (unsubscribeTyping) unsubscribeTyping(); // <-- ▼▼▼ หยุดฟัง ▼▼▼
+                    
                     currentUser = null;
                     chatSignIn.classList.remove('hidden');
                     chatMain.classList.add('hidden');
-                    if (unsubscribeMessages) unsubscribeMessages();
                     chatMessages.innerHTML = ''; 
                 }
             });
             
-            // ฟังก์ชันดึง/ฟังข้อความ
+            // ฟังก์ชันดึง/ฟังข้อความ (เหมือนเดิม)
             function listenToMessages() {
                 if (unsubscribeMessages) unsubscribeMessages();
-
                 let isInitialLoad = true;
-
-                const messagesQuery = query(
-                    collection(fbStore, 'messages'),
-                    orderBy('createdAt', 'desc'),
-                    limit(50)
-                );
-
+                const messagesQuery = query(collection(fbStore, 'messages'), orderBy('createdAt', 'desc'), limit(50));
                 unsubscribeMessages = onSnapshot(messagesQuery, snapshot => {
-                    
-                    if (isInitialLoad) {
-                        chatMessages.innerHTML = '';
-                    }
-
+                    if (isInitialLoad) chatMessages.innerHTML = '';
                     snapshot.docChanges().reverse().forEach(change => {
                         if (change.type === 'added') {
                             const data = change.doc.data();
-                            
                             renderMessage(data); 
-
-                            // ======== 🎵 3. ★★★★★ นี่คือส่วนที่แก้ไข ★★★★★ ========
-                            // คง .load() ไว้ เพื่อรีเซ็ตเสียงทุกครั้ง
                             if (!isInitialLoad && currentUser && data.uid !== currentUser.uid) {
-                                
-                                notificationSound.load(); // <--- รีเซ็ตไฟล์เสียง
-
-                                notificationSound.play().catch(e => {
-                                    console.log("Audio play failed:", e.message); 
-                                });
+                                notificationSound.load(); 
+                                notificationSound.play().catch(e => console.log("Audio play failed:", e.message));
                             }
                         }
                     });
-                    
                     isInitialLoad = false;
-
                 }, error => console.error("Error listening to messages:", error));
+            }
+
+            // ======== ✍️ 3. ฟังก์ชัน "ฟัง" สถานะการพิมพ์ ========
+            function listenToTypingStatus() {
+                if (unsubscribeTyping) unsubscribeTyping();
+
+                const typingQuery = query(collection(fbStore, 'typingStatus'));
+                
+                unsubscribeTyping = onSnapshot(typingQuery, (snapshot) => {
+                    if (!currentUser) return;
+                    
+                    const typers = [];
+                    const now = new Date();
+
+                    snapshot.forEach(doc => {
+                        const data = doc.data();
+                        const docTime = data.timestamp?.toDate();
+
+                        // ถ้าไม่มีเวลา หรือ เวลาเก่าเกิน 10 วิ (หลุด/ค้าง) ให้ลบทิ้ง
+                        if (!docTime || (now - docTime) / 1000 > 10) {
+                            deleteDoc(doc.ref);
+                            return;
+                        }
+                        
+                        // เพิ่มคนพิมพ์ (ที่ไม่ใช่เรา)
+                        if (data.uid !== currentUser.uid) {
+                            typers.push(data.name);
+                        }
+                    });
+
+                    // อัปเดต UI
+                    if (typers.length === 0) {
+                        typingIndicator.textContent = '';
+                    } else if (typers.length === 1) {
+                        typingIndicator.textContent = `${typers[0]} กำลังพิมพ์...`;
+                    } else {
+                        typingIndicator.textContent = `${typers.join(', ')} กำลังพิมพ์...`;
+                    }
+                });
             }
             
             // ฟังก์ชันแสดงผลข้อความ
@@ -286,21 +365,15 @@
                 const isMine = data.uid === currentUser.uid;
                 const bubble = document.createElement('div');
                 bubble.className = `chat-bubble ${isMine ? 'mine' : 'theirs'}`;
-                
                 let senderName = isMine ? 'คุณ' : (data.name || data.email.split('@')[0]);
-                
                 const senderDiv = document.createElement('div');
                 senderDiv.className = 'chat-bubble-sender';
                 senderDiv.textContent = senderName;
-
                 const textDiv = document.createElement('div');
                 textDiv.textContent = data.text;
-
                 bubble.appendChild(senderDiv);
                 bubble.appendChild(textDiv);
-                
                 chatMessages.appendChild(bubble); 
-                
                 chatMessages.parentElement.scrollTop = chatMessages.parentElement.scrollHeight;
             }
 
@@ -316,7 +389,7 @@
 
 
             //
-            // --- โค้ด DASHBOARD เดิมของคุณ START ---
+            // --- โค้ด DASHBOARD เดิมของคุณ (ไม่แก้ไข) ---
             //
             async function loadData() {
                 if (!state.scriptUrl) { openSettings(); return; }
