@@ -43,17 +43,6 @@
         .chat-input button:disabled { background: #ccc; }
         .chat-signin { padding: 2rem; text-align: center; background: #fff; }
         .chat-signin button { background: #4285F4; color: white; padding: 0.75rem 1.5rem; border-radius: 0.5rem; font-weight: 600; cursor: pointer; }
-        
-        /* CSS สำหรับ Typing Indicator */
-        .typing-indicator {
-            min-height: 1.5rem; /* จองพื้นที่ไว้เล็กน้อย */
-            font-style: italic;
-            color: #6b7280;
-            padding: 0.25rem 1rem 0.1rem;
-            background: #fff;
-            border-top: 1px solid #e5e7eb;
-            transition: opacity 0.3s;
-        }
         /* ======== 💬 CSS สำหรับแชท END ======== */
     </style>
 </head>
@@ -62,7 +51,7 @@
         
         <div id="settingsModal" class="hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
             <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-lg w-full">
-                <div class="flex items-center gap: 3 mb-6"><div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center text-white text-xl">⚙️</div><h2 class="text-2xl font-bold text-gray-800">ตั้งค่า</h2></div>
+                <div class="flex items-center gap-3 mb-6"><div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center text-white text-xl">⚙️</div><h2 class="text-2xl font-bold text-gray-800">ตั้งค่า</h2></div>
                 <div class="mb-6"><label class="block text-sm font-semibold text-gray-700 mb-3">Apps Script URL</label><input type="text" id="urlInput" placeholder="https://script.google.com/macros/s/.../exec" class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors bg-gray-50"/></div>
                 <div id="settingsError" class="hidden mb-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 text-sm rounded-r-lg"></div>
                 <div class="flex gap-3"><button id="saveSettingsBtn" class="flex-1 bg-gradient-to-r from-blue-500 to-purple-600 text-white py-3 rounded-lg font-semibold hover:shadow-lg transition-all">บันทึก</button><button id="closeSettingsBtn" class="px-6 bg-gray-200 text-gray-700 py-3 rounded-lg font-semibold hover:bg-gray-300 transition-colors">ยกเลิก</button></div>
@@ -99,8 +88,6 @@
                         </div>
                 </div>
                 
-                <div id="typingIndicator" class="typing-indicator"></div>
-
                 <form id="chatForm" class="chat-input">
                     <input type="text" id="chatInput" placeholder="พิมพ์ข้อความ..." autocomplete="off" />
                     <button type="submit" id="chatSendBtn">ส่ง</button>
@@ -112,14 +99,14 @@
         // =============================================
         // 🔥 FIREBASE v12 IMPORTS
         // =============================================
-        import { initializeApp } from "https.gstatic.com/firebasejs/12.5.0/firebase-app.js";
-        import { getAnalytics } from "https.gstatic.com/firebasejs/12.5.0/firebase-analytics.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-app.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-analytics.js";
         import {
             getAuth,
             onAuthStateChanged,
             GoogleAuthProvider,
             signInWithPopup
-        } from "https.gstatic.com/firebasejs/12.5.0/firebase-auth.js";
+        } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-auth.js";
         import {
             getFirestore,
             collection,
@@ -129,11 +116,8 @@
             orderBy,
             limit,
             onSnapshot,
-            // ▼▼▼ Imports ใหม่สำหรับ Typing ▼▼▼
-            doc,
-            setDoc,
-            deleteDoc
-        } from "https.gstatic.com/firebasejs/12.5.0/firebase-firestore.js";
+            // ลบ doc, setDoc, deleteDoc ออก
+        } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-firestore.js";
 
         
         // =============================================
@@ -161,9 +145,9 @@
         notificationSound.preload = 'auto';
         let isAudioUnlocked = false; 
 
-        // ======== ✍️ 1. ตัวแปรสำหรับ Typing Indicator ========
-        let typingTimeout = null;
-        let unsubscribeTyping = null;
+        // ======== ✍️ 1. ลบตัวแปร Typing Indicator ออก ========
+        // (ไม่มี typingTimeout)
+        // (ไม่มี unsubscribeTyping)
 
 
         // =============================================
@@ -189,7 +173,7 @@
             const chatMessages = document.getElementById('chatMessages');
             const chatForm = document.getElementById('chatForm');
             const chatInput = document.getElementById('chatInput');
-            const typingIndicator = document.getElementById('typingIndicator');
+            // (ไม่มี typingIndicator element)
             
             chatWidget.classList.remove('hidden'); 
 
@@ -215,30 +199,10 @@
                 });
             });
 
-            // ======== ✍️ 2. ฟังก์ชันสำหรับ Typing Indicator ========
-            async function stopTyping() {
-                if (!currentUser) return;
-                try {
-                    await deleteDoc(doc(fbStore, 'typingStatus', currentUser.uid));
-                } catch (e) { console.error("Could not delete typing status:", e); }
-                typingTimeout = null;
-            }
-
-            function notifyUserTyping() {
-                if (!currentUser) return;
-                if (typingTimeout) {
-                    clearTimeout(typingTimeout);
-                }
-                const typingRef = doc(fbStore, 'typingStatus', currentUser.uid);
-                setDoc(typingRef, {
-                    name: currentUser.displayName || currentUser.email.split('@')[0],
-                    uid: currentUser.uid,
-                    timestamp: serverTimestamp()
-                }).catch(e => console.error("Could not set typing status:", e));
-                typingTimeout = setTimeout(stopTyping, 3000);
-            }
-
-            chatInput.addEventListener('keydown', notifyUserTyping);
+            // ======== ✍️ 2. ลบฟังก์ชัน Typing Indicator ออก ========
+            // (ไม่มี stopTyping)
+            // (ไม่มี notifyUserTyping)
+            // (ไม่มี event listener ของ chatInput)
 
 
             // จัดการการส่งข้อความ
@@ -255,8 +219,7 @@
                             createdAt: serverTimestamp()
                         });
                         chatInput.value = ''; 
-                        if (typingTimeout) clearTimeout(typingTimeout);
-                        stopTyping(); 
+                        // (ไม่มี stopTyping)
                     } catch (err) {
                         console.error("Error sending message:", err);
                     }
@@ -270,10 +233,10 @@
                     chatSignIn.classList.add('hidden');
                     chatMain.classList.remove('hidden');
                     listenToMessages();
-                    listenToTypingStatus(); 
+                    // (ไม่มี listenToTypingStatus)
                 } else {
                     if (unsubscribeMessages) unsubscribeMessages();
-                    if (unsubscribeTyping) unsubscribeTyping(); 
+                    // (ไม่มี unsubscribeTyping)
                     
                     currentUser = null;
                     chatSignIn.classList.remove('hidden');
@@ -303,34 +266,8 @@
                 }, error => console.error("Error listening to messages:", error));
             }
 
-            // ======== ✍️ 3. ฟังก์ชัน "ฟัง" สถานะการพิมพ์ ========
-            function listenToTypingStatus() {
-                if (unsubscribeTyping) unsubscribeTyping();
-                const typingQuery = query(collection(fbStore, 'typingStatus'));
-                unsubscribeTyping = onSnapshot(typingQuery, (snapshot) => {
-                    if (!currentUser) return;
-                    const typers = [];
-                    const now = new Date();
-                    snapshot.forEach(doc => {
-                        const data = doc.data();
-                        const docTime = data.timestamp?.toDate();
-                        if (!docTime || (now - docTime) / 1000 > 10) {
-                            deleteDoc(doc.ref);
-                            return;
-                        }
-                        if (data.uid !== currentUser.uid) {
-                            typers.push(data.name);
-                        }
-                    });
-                    if (typers.length === 0) {
-                        typingIndicator.textContent = '';
-                    } else if (typers.length === 1) {
-                        typingIndicator.textContent = `${typers[0]} กำลังพิมพ์...`;
-                    } else {
-                        typingIndicator.textContent = `${typers.join(', ')} กำลังพิมพ์...`;
-                    }
-                });
-            }
+            // ======== ✍️ 3. ลบฟังก์ชัน "ฟัง" สถานะการพิมพ์ ========
+            // (ไม่มี listenToTypingStatus)
             
             // ฟังก์ชันแสดงผลข้อความ
             function renderMessage(data) {
@@ -350,13 +287,11 @@
                 chatMessages.parentElement.scrollTop = chatMessages.parentElement.scrollHeight;
             }
 
-            // ======== ★★★★★ นี่คือส่วนที่แก้ไข ★★★★★ ========
-            // ฟังก์ชันพับ/กางแชท (เอา `function` ที่ผิดพลาดออก)
+            // ฟังก์ชันพับ/กางแชท (ที่ถูกต้อง)
             chatHeader.addEventListener('click', () => {
                 chatContainer.classList.toggle('hidden');
                 chatToggle.textContent = chatContainer.classList.contains('hidden') ? '▲' : '▼';
             });
-            // =============================================
             
             // =============================================
             // 🔥 ส่วนของ FIREBASE CHAT END
