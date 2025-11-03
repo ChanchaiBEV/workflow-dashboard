@@ -1,454 +1,368 @@
-<!DOCTYPE html>
-<html lang="th">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BEV Dashboard</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        * { --tw-ring-offset-shadow: 0 0 #0000; --tw-ring-shadow: 0 0 #0000; --tw-shadow: 0 0 #0000; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        .spinner { border: 3px solid rgba(0,0,0,0.1); border-top: 3px solid #4f46e5; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        @keyframes pulse-glow { 0%, 100% { box-shadow: 0 0 20px rgba(34, 197, 94, 0.4); } 50% { box-shadow: 0 0 30px rgba(34, 197, 94, 0.6); } }
-        .pulse-glow { animation: pulse-glow 2s ease-in-out infinite; }
-        .details-content { max-height: 0; opacity: 0; overflow: hidden; transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s ease-in-out; }
-        .details-content.open { max-height: 5000px; opacity: 1; }
-        .arrow-icon { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); display: inline-block; }
-        .arrow-icon.open { transform: rotate(180deg); }
-        .card-container { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-        .card-container:hover { transform: translateY(-4px); box-shadow: 0 12px 24px rgba(0,0,0,0.12); }
-        .status-badge { font-weight: 600; font-size: 0.75rem; padding: 0.375rem 0.75rem; border-radius: 9999px; display: inline-flex; align-items: center; gap: 0.25rem; }
-        .header-gradient { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
-        .filter-box { transition: all 0.3s ease; border: 2px solid transparent; position: relative; padding-left: 2.5rem; }
-        .filter-box:focus { border-color: #667eea; box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1); }
-        .filter-icon { position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); font-size: 1.1rem; pointer-events: none; }
-        .info-card { background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border-left: 4px solid #0ea5e9; }
-        .data-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; font-weight: 600; }
+<script type="module">
+    // =============================================
+    // 🔥 FIREBASE v12 IMPORTS
+    // =============================================
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-app.js";
+    import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-analytics.js";
+    import {
+        getAuth,
+        onAuthStateChanged,
+        GoogleAuthProvider,
+        signInWithPopup
+    } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-auth.js";
+    import {
+        getFirestore,
+        collection,
+        addDoc,
+        serverTimestamp,
+        query,
+        orderBy,
+        limit,
+        onSnapshot
+    } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-firestore.js";
 
-        /* ======== 💬 CSS สำหรับแชท START ======== */
-        .chat-widget { position: fixed; bottom: 2rem; right: 2rem; width: 350px; border-radius: 1rem; box-shadow: 0 10px 25px rgba(0,0,0,0.15); overflow: hidden; z-index: 100; transition: all 0.3s; }
-        .chat-header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 1rem; font-weight: bold; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
-        .chat-body { height: 400px; overflow-y: auto; background: #f9f9f9; padding: 1rem; display: flex; flex-direction: column-reverse; }
-        .chat-messages { display: flex; flex-direction: column; gap: 0.75rem; }
-        .chat-bubble { max-width: 80%; padding: 0.5rem 0.75rem; border-radius: 0.75rem; word-wrap: break-word; }
-        .chat-bubble.mine { background: #667eea; color: white; align-self: flex-end; border-bottom-right-radius: 0.25rem; }
-        .chat-bubble.theirs { background: #e5e7eb; color: #1f2937; align-self: flex-start; border-bottom-left-radius: 0.25rem; }
-        .chat-bubble-sender { font-size: 0.7rem; font-weight: bold; color: #4b5563; margin-bottom: 2px; }
-        .chat-bubble.theirs .chat-bubble-sender { color: #667eea; }
-        .chat-input { display: flex; border-top: 1px solid #e5e7eb; }
-        .chat-input input { flex: 1; border: none; padding: 1rem; outline: none; }
-        .chat-input button { background: #667eea; color: white; border: none; padding: 0 1.25rem; font-weight: bold; cursor: pointer; transition: background 0.2s; }
-        .chat-input button:hover { background: #5a6bda; }
-        .chat-input button:disabled { background: #ccc; }
-        .chat-signin { padding: 2rem; text-align: center; background: #fff; }
-        .chat-signin button { background: #4285F4; color: white; padding: 0.75rem 1.5rem; border-radius: 0.5rem; font-weight: 600; cursor: pointer; }
-        /* ======== 💬 CSS สำหรับแชท END ======== */
-    </style>
-</head>
-<body class="bg-gradient-to-br from-slate-50 to-slate-100 min-h-screen p-4 md:p-8">
-    <div class="max-w-7xl mx-auto">
-        
-        <div id="settingsModal" class="hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
-            <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-lg w-full">
-               <div class="flex items-center gap-3 mb-6"><div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center text-white text-xl">⚙️</div><h2 class="text-2xl font-bold text-gray-800">ตั้งค่า</h2></div>
-               <div class="mb-6"><label class="block text-sm font-semibold text-gray-700 mb-3">Apps Script URL</label><input type="text" id="urlInput" placeholder="https://script.google.com/macros/s/.../exec" class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors bg-gray-50"/></div>
-               <div id="settingsError" class="hidden mb-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 text-sm rounded-r-lg"></div>
-               <div class="flex gap-3"><button id="saveSettingsBtn" class="flex-1 bg-gradient-to-r from-blue-500 to-purple-600 text-white py-3 rounded-lg font-semibold hover:shadow-lg transition-all">บันทึก</button><button id="closeSettingsBtn" class="px-6 bg-gray-200 text-gray-700 py-3 rounded-lg font-semibold hover:bg-gray-300 transition-colors">ยกเลิก</button></div>
-           </div>
-        </div>
-        
-        <div class="mb-8">
-            <div class="header-gradient rounded-2xl shadow-2xl p-8 text-white"><div class="flex items-start justify-between gap-4 mb-6 flex-wrap"><div><h1 class="text-4xl font-bold mb-2 flex items-center gap-3"><span class="text-5xl">📊</span> BEV Dashboard Test Product & PM Engineer</h1><p class="text-white text-opacity-90 text-sm hidden"></p></div><div class="flex gap-3 flex-wrap"><a href="https://docs.google.com/spreadsheets/d/1K5532IFh_zpI_ZI7TcDedyYedztRvRMEXcdo3BSBvXA/edit?usp=sharing" target="_blank" class="pulse-glow bg-gradient-to-r from-green-400 to-green-600 hover:from-green-500 hover:to-green-700 text-white px-6 py-3 rounded-xl font-bold flex items-center gap-3 shadow-2xl transform hover:scale-105 transition-all"><span class="text-2xl">📜</span><span>เปิด Google Sheet</span></a><button id="refreshBtn" class="bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-4 py-2.5 rounded-lg font-semibold flex items-center gap-2 transition-all"><span>🔄</span> รีเฟรช</button><button id="openSettingsBtn" class="bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-4 py-2.5 rounded-lg font-semibold flex items-center gap-2 transition-all"><span>⚙️</span> ตั้งค่า</button></div></div><div class="bg-black bg-opacity-20 rounded-xl p-4 backdrop-blur-sm"><div class="flex items-center justify-between flex-wrap gap-4"><div class="flex items-center gap-3 hidden"><span class="text-2xl">⏱️</span><span class="font-semibold">รีเฟรชอัตโนมัติ:</span></div><select id="refreshInterval" class="bg-white text-gray-900 border-0 rounded-lg px-4 py-2 text-sm focus:outline-none font-semibold shadow-lg"><option value="0">ปิด</option><option value="30" selected>30 วินาที</option><option value="60">1 นาที</option><option value="120">2 นาที</option></select></div></div></div>
-            <div id="mainError" class="hidden mt-4 p-4 bg-red-100 border-l-4 border-red-500 text-red-700 text-sm rounded-lg shadow-lg"></div>
-        </div>
-        
-        <div class="mb-8">
-            <div class="bg-white rounded-2xl shadow-lg p-6"><div class="flex items-center justify-between mb-4"><h2 class="text-xl font-bold text-gray-800 flex items-center gap-2"><span class="text-2xl">🔍</span> กรองข้อมูล</h2><button id="clearFiltersBtn" class="text-sm text-indigo-600 hover:text-indigo-800 font-semibold px-4 py-2 rounded-lg hover:bg-indigo-50 transition-all">ล้างทั้งหมด</button></div><div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4"><div class="relative"><span class="filter-icon">👤</span><select id="customerFilter" class="filter-box w-full px-4 py-3.5 bg-gray-50 text-gray-900 border-2 border-gray-200 rounded-xl focus:outline-none focus:bg-white transition-all font-medium"><option value="">ทุกลูกค้า</option></select></div><div class="relative"><span class="filter-icon">🧪</span><select id="testerFilter" class="filter-box w-full px-4 py-3.5 bg-gray-50 text-gray-900 border-2 border-gray-200 rounded-xl focus:outline-none focus:bg-white transition-all font-medium"><option value="">ทุกผู้ทดสอบ</option></select></div><div class="relative"><span class="filter-icon">💼</span><select id="salespersonFilter" class="filter-box w-full px-4 py-3.5 bg-gray-50 text-gray-900 border-2 border-gray-200 rounded-xl focus:outline-none focus:bg-white transition-all font-medium"><option value="">ทุกเซลล์</option></select></div><div class="relative"><span class="filter-icon">✓</span><select id="statusFilter" class="filter-box w-full px-4 py-3.5 bg-gray-50 text-gray-900 border-2 border-gray-200 rounded-xl focus:outline-none focus:bg-white transition-all font-medium"><option value="">ทุกสถานะ</option><option value="ผ่าน">✓ ผ่าน</option><option value="ไม่ผ่าน">✕ ไม่ผ่าน</option><option value="รอทดสอบ">◌ รอทดสอบ</option></select></div><div class="relative"><span class="filter-icon">📅</span><select id="monthFilter" class="filter-box w-full px-4 py-3.5 bg-gray-50 text-gray-900 border-2 border-gray-200 rounded-xl focus:outline-none focus:bg-white transition-all font-medium"><option value="">ทุกเดือน (PM)</option><option value="ม.ค.">มกราคม</option><option value="ก.พ.">กุมภาพันธ์</option><option value="มี.ค.">มีนาคม</option><option value="เม.ย.">เมษายน</option><option value="พ.ค.">พฤษภาคม</option><option value="มิ.ย.">มิถุนายน</option><option value="ก.ค.">กรกฎาคม</option><option value="ส.ค.">สิงหาคม</option><option value="ก.ย.">กันยายน</option><option value="ต.ค.">ตุลาคม</option><option value="พ.ย.">พฤศจิกายน</option><option value="ธ.ค.">ธันวาคม</option></select></div></div><div id="activeFilters" class="hidden mt-4 pt-4 border-t border-gray-200"><div class="flex flex-wrap gap-2" id="activeFiltersList"></div></div></div>
-        </div>
-        
-        <div id="content" class="space-y-4"></div>
-    </div>
+    
+    // =============================================
+    // 🔥 FIREBASE v12 CONFIG (จากที่คุณส่งมา)
+    // =============================================
+    const firebaseConfig = {
+        apiKey: "AIzaSyCaH8Yuz4NTJ18woedPFhf1jL5UqSHxJqs",
+        authDomain: "bev-dashboard-chat.firebaseapp.com",
+        projectId: "bev-dashboard-chat",
+        storageBucket: "bev-dashboard-chat.firebasestorage.app",
+        messagingSenderId: "1013753938979",
+        appId: "1:1013753938979:web:fc4bb84095822de8631d96",
+        measurementId: "G-QHPY9MP0Z4"
+    };
 
-    <div id="chatWidget" class="chat-widget hidden">
-        <div id="chatHeader" class="chat-header">
-            <span>💬 แชทภายในทีม</span>
-            <span id="chatToggle" class="cursor-pointer">▼</span>
-        </div>
+    // Initialize Firebase
+    const fbApp = initializeApp(firebaseConfig);
+    const fbAnalytics = getAnalytics(fbApp);
+    const fbAuth = getAuth(fbApp);
+    const fbStore = getFirestore(fbApp);
+    const googleProvider = new GoogleAuthProvider();
+
+    // ======== 🎵 1. เพิ่มตัวแปรเสียงแจ้งเตือน ========
+    const notificationSound = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-software-interface-start-2574.mp3');
+    notificationSound.preload = 'auto';
+
+
+    // =============================================
+    // 🚀 โค้ดทั้งหมดของแอป (Dashboard + Chat)
+    // =============================================
+    document.addEventListener('DOMContentLoaded', () => {
+        let state = { scriptUrl: null, autoRefreshTimer: null, allData: [], filters: { customer: '', tester: '', salesperson: '', status: '', month: '' } };
+        const elements = { settingsModal: document.getElementById('settingsModal'), urlInput: document.getElementById('urlInput'), saveSettingsBtn: document.getElementById('saveSettingsBtn'), closeSettingsBtn: document.getElementById('closeSettingsBtn'), openSettingsBtn: document.getElementById('openSettingsBtn'), settingsError: document.getElementById('settingsError'), refreshBtn: document.getElementById('refreshBtn'), refreshInterval: document.getElementById('refreshInterval'), mainError: document.getElementById('mainError'), content: document.getElementById('content'), customerFilter: document.getElementById('customerFilter'), testerFilter: document.getElementById('testerFilter'), salespersonFilter: document.getElementById('salespersonFilter'), statusFilter: document.getElementById('statusFilter'), monthFilter: document.getElementById('monthFilter'), clearFiltersBtn: document.getElementById('clearFiltersBtn'), activeFilters: document.getElementById('activeFilters'), activeFiltersList: document.getElementById('activeFiltersList') };
+
+        // =============================================
+        // 🔥 ส่วนของ FIREBASE CHAT
+        // =============================================
+        let currentUser = null;
+        let unsubscribeMessages = null; 
+
+        const chatWidget = document.getElementById('chatWidget');
+        const chatHeader = document.getElementById('chatHeader');
+        const chatToggle = document.getElementById('chatToggle');
+        const chatContainer = document.getElementById('chatContainer');
+        const chatSignIn = document.getElementById('chatSignIn');
+        const chatLoginBtn = document.getElementById('chatLoginBtn');
+        const chatMain = document.getElementById('chatMain');
+        const chatMessages = document.getElementById('chatMessages');
+        const chatForm = document.getElementById('chatForm');
+        const chatInput = document.getElementById('chatInput');
         
-        <div id="chatContainer" class="open">
-            <div id="chatSignIn" class="chat-signin">
-                <p class="mb-4 text-gray-700">กรุณา Sign in with Google เพื่อใช้งานแชท</p>
-                <button id="chatLoginBtn">Sign in with Google</button>
-            </div>
+        chatWidget.classList.remove('hidden'); 
+
+        // ======== 🎵 2. อัปเดตฟังก์ชัน "คลิก" ล็อกอิน ========
+        chatLoginBtn.addEventListener('click', () => {
             
-            <div id="chatMain" class="hidden">
-                <div class="chat-body">
-                    <div id="chatMessages" class="chat-messages">
-                        </div>
-                </div>
-                <form id="chatForm" class="chat-input">
-                    <input type="text" id="chatInput" placeholder="พิมพ์ข้อความ..." autocomplete="off" />
-                    <button type="submit" id="chatSendBtn">ส่ง</button>
-                </form>
-            </div>
-        </div>
-    </div>
-    <script type="module">
-        // =============================================
-        // 🔥 FIREBASE v12 IMPORTS
-        // =============================================
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-app.js";
-        import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-analytics.js";
-        import {
-            getAuth,
-            onAuthStateChanged,
-            GoogleAuthProvider,
-            signInWithPopup
-        } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-auth.js";
-        import {
-            getFirestore,
-            collection,
-            addDoc,
-            serverTimestamp,
-            query,
-            orderBy,
-            limit,
-            onSnapshot
-        } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-firestore.js";
-
-        
-        // =============================================
-        // 🔥 FIREBASE v12 CONFIG (จากที่คุณส่งมา)
-        // =============================================
-        const firebaseConfig = {
-            apiKey: "AIzaSyCaH8Yuz4NTJ18woedPFhf1jL5UqSHxJqs",
-            authDomain: "bev-dashboard-chat.firebaseapp.com",
-            projectId: "bev-dashboard-chat",
-            storageBucket: "bev-dashboard-chat.firebasestorage.app",
-            messagingSenderId: "1013753938979",
-            appId: "1:1013753938979:web:fc4bb84095822de8631d96",
-            measurementId: "G-QHPY9MP0Z4"
-        };
-
-        // Initialize Firebase
-        const fbApp = initializeApp(firebaseConfig);
-        const fbAnalytics = getAnalytics(fbApp);
-        const fbAuth = getAuth(fbApp);
-        const fbStore = getFirestore(fbApp);
-        const googleProvider = new GoogleAuthProvider();
-
-        // ======== 🎵 1. เพิ่มตัวแปรเสียงแจ้งเตือน ========
-        const notificationSound = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-software-interface-start-2574.mp3');
-        notificationSound.preload = 'auto';
-
-
-        // =============================================
-        // 🚀 โค้ดทั้งหมดของแอป (Dashboard + Chat)
-        // =============================================
-        document.addEventListener('DOMContentLoaded', () => {
-            let state = { scriptUrl: null, autoRefreshTimer: null, allData: [], filters: { customer: '', tester: '', salesperson: '', status: '', month: '' } };
-            const elements = { settingsModal: document.getElementById('settingsModal'), urlInput: document.getElementById('urlInput'), saveSettingsBtn: document.getElementById('saveSettingsBtn'), closeSettingsBtn: document.getElementById('closeSettingsBtn'), openSettingsBtn: document.getElementById('openSettingsBtn'), settingsError: document.getElementById('settingsError'), refreshBtn: document.getElementById('refreshBtn'), refreshInterval: document.getElementById('refreshInterval'), mainError: document.getElementById('mainError'), content: document.getElementById('content'), customerFilter: document.getElementById('customerFilter'), testerFilter: document.getElementById('testerFilter'), salespersonFilter: document.getElementById('salespersonFilter'), statusFilter: document.getElementById('statusFilter'), monthFilter: document.getElementById('monthFilter'), clearFiltersBtn: document.getElementById('clearFiltersBtn'), activeFilters: document.getElementById('activeFilters'), activeFiltersList: document.getElementById('activeFiltersList') };
-
-            // =============================================
-            // 🔥 ส่วนของ FIREBASE CHAT (อัปเดตสำหรับ v12)
-            // =============================================
-            let currentUser = null;
-            let unsubscribeMessages = null; 
-
-            const chatWidget = document.getElementById('chatWidget');
-            const chatHeader = document.getElementById('chatHeader');
-            const chatToggle = document.getElementById('chatToggle');
-            const chatContainer = document.getElementById('chatContainer');
-            const chatSignIn = document.getElementById('chatSignIn');
-            const chatLoginBtn = document.getElementById('chatLoginBtn');
-            const chatMain = document.getElementById('chatMain');
-            const chatMessages = document.getElementById('chatMessages');
-            const chatForm = document.getElementById('chatForm');
-            const chatInput = document.getElementById('chatInput');
-            
-            chatWidget.classList.remove('hidden'); 
-
-            // จัดการการล็อกอิน (v12)
-            chatLoginBtn.addEventListener('click', () => {
-                signInWithPopup(fbAuth, googleProvider).catch(error => {
-                    console.error("Login failed:", error);
+            // "ปลดล็อก" เสียงโดยการเล่นและหยุดทันที (จำเป็นสำหรับ Autoplay Policy)
+            try {
+                notificationSound.play().then(() => {
+                    notificationSound.pause();
+                    notificationSound.currentTime = 0;
+                }).catch(e => {
+                    console.log("Audio context unlock failed, but that's okay.");
                 });
+            } catch (e) { /* ignore */ }
+
+            // ดำเนินการล็อกอิน
+            signInWithPopup(fbAuth, googleProvider).catch(error => {
+                console.error("Login failed:", error);
             });
+        });
 
-            // จัดการการส่งข้อความ (v12)
-            chatForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const text = chatInput.value.trim();
-                if (text && currentUser) {
-                    try {
-                        await addDoc(collection(fbStore, 'messages'), {
-                            text: text,
-                            name: currentUser.displayName || currentUser.email,
-                            email: currentUser.email,
-                            uid: currentUser.uid,
-                            createdAt: serverTimestamp()
-                        });
-                        chatInput.value = ''; 
-                    } catch (err) {
-                        console.error("Error sending message:", err);
-                    }
-                }
-            });
-
-            // ฟังสถานะล็อกอิน (v12)
-            onAuthStateChanged(fbAuth, user => {
-                if (user) {
-                    currentUser = user;
-                    chatSignIn.classList.add('hidden');
-                    chatMain.classList.remove('hidden');
-                    listenToMessages();
-                } else {
-                    currentUser = null;
-                    chatSignIn.classList.remove('hidden');
-                    chatMain.classList.add('hidden');
-                    if (unsubscribeMessages) unsubscribeMessages();
-                    chatMessages.innerHTML = ''; 
-                }
-            });
-            
-            // ======== 🎵 2. อัปเดตฟังก์ชัน `listenToMessages` ========
-            function listenToMessages() {
-                if (unsubscribeMessages) unsubscribeMessages();
-
-                let isInitialLoad = true;
-
-                const messagesQuery = query(
-                    collection(fbStore, 'messages'),
-                    orderBy('createdAt', 'desc'),
-                    limit(50)
-                );
-
-                unsubscribeMessages = onSnapshot(messagesQuery, snapshot => {
-                    
-                    if (isInitialLoad) {
-                        chatMessages.innerHTML = '';
-                    }
-
-                    snapshot.docChanges().reverse().forEach(change => {
-                        if (change.type === 'added') {
-                            const data = change.doc.data();
-                            
-                            renderMessage(data); 
-
-                            if (!isInitialLoad && currentUser && data.uid !== currentUser.uid) {
-                                // พยายามเล่นเสียง
-                                notificationSound.play().catch(e => {
-                                    console.log("Audio play failed (this is normal on first interaction):", e.message);
-                                });
-                            }
-                        }
-                    });
-                    
-                    isInitialLoad = false;
-
-                }, error => console.error("Error listening to messages:", error));
-            }
-            
-            // ฟังก์ชันแสดงผลข้อความ (อัปเดตให้เลื่อน Scroll)
-            function renderMessage(data) {
-                if (!currentUser) return;
-                const isMine = data.uid === currentUser.uid;
-                const bubble = document.createElement('div');
-                bubble.className = `chat-bubble ${isMine ? 'mine' : 'theirs'}`;
-                
-                let senderName = isMine ? 'คุณ' : (data.name || data.email.split('@')[0]);
-                
-                const senderDiv = document.createElement('div');
-                senderDiv.className = 'chat-bubble-sender';
-                senderDiv.textContent = senderName; // ป้องกัน XSS
-
-                const textDiv = document.createElement('div');
-                textDiv.textContent = data.text; // ป้องกัน XSS
-
-                bubble.appendChild(senderDiv);
-                bubble.appendChild(textDiv);
-                
-                chatMessages.appendChild(bubble); 
-                
-                // เลื่อน scroll ไปล่างสุด (เพื่อให้เห็นข้อความใหม่)
-                chatMessages.parentElement.scrollTop = chatMessages.parentElement.scrollHeight;
-            }
-
-            // ฟังก์ชันพับ/กางแชท (เหมือนเดิม)
-            chatHeader.addEventListener('click', () => {
-                chatContainer.classList.toggle('hidden');
-                chatToggle.textContent = chatContainer.classList.contains('hidden') ? '▲' : '▼';
-            });
-            
-            // =============================================
-            // 🔥 ส่วนของ FIREBASE CHAT END
-            // =============================================
-
-
-            //
-            // --- โค้ด DASHBOARD เดิมของคุณ START ---
-            //
-            async function loadData() {
-                if (!state.scriptUrl) { openSettings(); return; }
-                setLoadingState(true);
-                hideError('main');
-                elements.content.innerHTML = '<div class="flex justify-center py-16"><div class="spinner"></div></div>';
+        // จัดการการส่งข้อความ
+        chatForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const text = chatInput.value.trim();
+            if (text && currentUser) {
                 try {
-                    const response = await fetch(state.scriptUrl + '?cacheBust=' + new Date().getTime());
-                    const data = await response.json();
-                    if (!data) { throw new Error("ได้รับข้อมูลว่างเปล่า (null)"); }
-                    if (data.error) { throw new Error(data.error); }
-                    const pmEngineerMap = createPmEngineerMap(data.engi || []);
-                    state.allData = groupProductData(data.product || [], pmEngineerMap);
-                    populateFilterDropdowns();
-                    renderContent();
-                } catch (error) { showError('main', `เกิดข้อผิดพลาด: ${error.message}`); } 
-                finally { setLoadingState(false); }
-            }
-            
-            function createPmEngineerMap(rows) { const map = new Map(); if (rows.length < 2) return map; const monthHeaders = rows[0].slice(3, 15); for (let i = 1; i < rows.length; i++) { const row = rows[i].map(c => String(c || '').trim()); const customer = row[0], ci = row[1]; if (customer && ci) { const key = `${customer}_${ci}`; const monthInfos = []; for (let j = 0; j < monthHeaders.length; j++) { if (row[j + 3]) { monthInfos.push(`${row[j + 3]} ${monthHeaders[j]}`); } } map.set(key, { frequency: row[2], month: monthInfos.join(', ') || '-', personInCharge: row[15], salesperson: row[16] }); } } return map; }
-            function groupProductData(rows, pmEngineerMap) {
-                const groupedData = [];
-                let currentGroup = null;
-                for (let i = 1; i < rows.length; i++) {
-                    const row = rows[i].map(c => String(c || '').trim());
-                    const [workOrder, salesperson, requestDateRaw, customer, ci, solution, device, brand, protocol, features, result, notes, tester, date, modifiedTimeRaw] = row; 
-                    if (workOrder) {
-                        if (currentGroup) groupedData.push(currentGroup);
-                        let formattedTestDate = date ? new Date(date).toLocaleDateString('th-TH', { year: 'numeric', month: 'short', day: 'numeric' }) : '-';
-                        let formattedRequestDate = requestDateRaw ? new Date(requestDateRaw).toLocaleDateString('th-TH', { year: 'numeric', month: 'short', day: 'numeric' }) : '-';
-                        currentGroup = { 
-                            customer, salesperson, ci, tester, 
-                            date: formattedTestDate,
-                            requestDate: formattedRequestDate,
-                            modifiedTime: formatSheetTime(modifiedTimeRaw),
-                            devices: [], statusCount: { passed: 0, failed: 0, pending: 0 }, 
-                            pmData: pmEngineerMap.get(`${customer}_${ci}`) || null 
-                        };
-                    }
-                    if ((device || solution || brand) && currentGroup) { 
-                        const res = result.toLowerCase();
-                        if (res.includes('ไม่ผ่าน')) currentGroup.statusCount.failed++; 
-                        else if (res.includes('ผ่าน')) currentGroup.statusCount.passed++; 
-                        else currentGroup.statusCount.pending++;
-                        currentGroup.devices.push({ solution, device, brand, protocol, features, result, notes, date });
-                    }
+                    await addDoc(collection(fbStore, 'messages'), {
+                        text: text,
+                        name: currentUser.displayName || currentUser.email,
+                        email: currentUser.email,
+                        uid: currentUser.uid,
+                        createdAt: serverTimestamp()
+                    });
+                    chatInput.value = ''; 
+                } catch (err) {
+                    console.error("Error sending message:", err);
                 }
-                if (currentGroup) groupedData.push(currentGroup);
-                return groupedData;
             }
-            function formatSheetTime(dateTimeString) { if (!dateTimeString) return '-'; try { const dateObj = new Date(dateTimeString); if (isNaN(dateObj.getTime())) return dateTimeString; return dateObj.toLocaleString('th-TH', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }); } catch (e) { return dateTimeString; } }
-            function populateFilterDropdowns() { const customers = new Set(); const testers = new Set(); const salespeople = new Set(); state.allData.forEach(group => { if (group.customer) customers.add(group.customer.trim()); if (group.tester) testers.add(group.tester.trim()); if (group.salesperson) salespeople.add(group.salesperson.trim()); }); const sortedCustomers = Array.from(customers).sort((a, b) => a.localeCompare(b, 'th')); elements.customerFilter.innerHTML = '<option value="">ทุกลูกค้า</option>' + sortedCustomers.map(n => `<option value="${n}">${n}</option>`).join(''); elements.customerFilter.value = state.filters.customer; const sortedTesters = Array.from(testers).sort((a, b) => a.localeCompare(b, 'th')); elements.testerFilter.innerHTML = '<option value="">ทุกผู้ทดสอบ</option>' + sortedTesters.map(n => `<option value="${n}">${n}</option>`).join(''); elements.testerFilter.value = state.filters.tester; const sortedSalespeople = Array.from(salespeople).sort((a, b) => a.localeCompare(b, 'th')); elements.salespersonFilter.innerHTML = '<option value="">ทุกเซลล์</option>' + sortedSalespeople.map(n => `<option value="${n}">${n}</option>`).join(''); elements.salespersonFilter.value = state.filters.salesperson;}
-            function updateActiveFilters() {
-                const activeFilterTags = [];
-                const filterMap = { customer: { label: 'ลูกค้า', icon: '👤' }, tester: { label: 'ผู้ทดสอบ', icon: '🧪' }, salesperson: { label: 'เซลล์', icon: '💼' }, status: { label: 'สถานะ', icon: '✓' }, month: { label: 'เดือน', icon: '📅' } };
-                Object.keys(state.filters).forEach(key => {
-                    if (state.filters[key]) {
-                        const info = filterMap[key];
-                        activeFilterTags.push(`<div class="inline-flex items-center gap-2 bg-indigo-100 text-indigo-800 px-3 py-1.5 rounded-full text-sm font-semibold"><span>${info.icon}</span><span>${info.label}: ${state.filters[key]}</span><button class="ml-1 hover:bg-indigo-200 rounded-full p-0.5" data-clear-filter="${key}">✕</button></div>`);
+        });
+
+        // ฟังสถานะล็อกอิน
+        onAuthStateChanged(fbAuth, user => {
+            if (user) {
+                currentUser = user;
+                chatSignIn.classList.add('hidden');
+                chatMain.classList.remove('hidden');
+                listenToMessages();
+            } else {
+                currentUser = null;
+                chatSignIn.classList.remove('hidden');
+                chatMain.classList.add('hidden');
+                if (unsubscribeMessages) unsubscribeMessages();
+                chatMessages.innerHTML = ''; 
+            }
+        });
+        
+        // ฟังก์ชันดึง/ฟังข้อความ (เหมือนเดิม)
+        function listenToMessages() {
+            if (unsubscribeMessages) unsubscribeMessages();
+
+            let isInitialLoad = true;
+
+            const messagesQuery = query(
+                collection(fbStore, 'messages'),
+                orderBy('createdAt', 'desc'),
+                limit(50)
+            );
+
+            unsubscribeMessages = onSnapshot(messagesQuery, snapshot => {
+                
+                if (isInitialLoad) {
+                    chatMessages.innerHTML = '';
+                }
+
+                snapshot.docChanges().reverse().forEach(change => {
+                    if (change.type === 'added') {
+                        const data = change.doc.data();
+                        
+                        renderMessage(data); 
+
+                        if (!isInitialLoad && currentUser && data.uid !== currentUser.uid) {
+                            notificationSound.play().catch(e => {
+                                console.log("Audio play failed:", e.message);
+                            });
+                        }
                     }
                 });
-                if (activeFilterTags.length > 0) { elements.activeFilters.classList.remove('hidden'); elements.activeFiltersList.innerHTML = activeFilterTags.join(''); } 
-                else { elements.activeFilters.classList.add('hidden'); }
-            }
-            function renderContent() { const { customer, tester, salesperson, status, month } = state.filters; let processedData = state.allData.filter(group => (!customer || group.customer === customer) && (!tester || group.tester === tester) && (!salesperson || group.salesperson === salesperson) && (!month || (group.pmData && group.pmData.month && group.pmData.month.includes(month)))); if (status) { processedData = processedData.map(group => ({ ...group, devices: group.devices.filter(device => device.result.includes(status)) })).filter(group => group.devices.length > 0); } updateActiveFilters(); if (processedData.length === 0) { elements.content.innerHTML = `<div class="bg-white rounded-2xl shadow-lg p-16 text-center"><div class="text-6xl mb-4">🔍</div><p class="text-gray-800 text-xl font-bold mb-2">ไม่พบข้อมูล</p><p class="text-gray-500 text-sm">ลองปรับเปลี่ยนการกรองข้อมูลของคุณ</p></div>`; return; } elements.content.innerHTML = processedData.map((g, i) => createGroupCardHTML(g, i)).join(''); }
+                
+                isInitialLoad = false;
+
+            }, error => console.error("Error listening to messages:", error));
+        }
+        
+        // ฟังก์ชันแสดงผลข้อความ (เหมือนเดิม)
+        function renderMessage(data) {
+            if (!currentUser) return;
+            const isMine = data.uid === currentUser.uid;
+            const bubble = document.createElement('div');
+            bubble.className = `chat-bubble ${isMine ? 'mine' : 'theirs'}`;
             
-            function createGroupCardHTML(group, index) { 
-                const statuses = [{count:group.statusCount.passed,label:'ผ่าน',icon:'✓',color:'bg-emerald-500 text-white shadow-lg shadow-emerald-200'},{count:group.statusCount.failed,label:'ไม่ผ่าน',icon:'✕',color:'bg-rose-500 text-white shadow-lg shadow-rose-200'},{count:group.statusCount.pending,label:'รอทดสอบ',icon:'◌',color:'bg-slate-400 text-white shadow-lg shadow-slate-200'}];
-                const sBadges = statuses.filter(s => s.count > 0).map(s => `<div class="status-badge ${s.color}"><span>${s.icon}</span> <strong>${s.count}</strong> ${s.label}</div>`).join('');
-                
-                const uniqueSolutions = [...new Set(group.devices.map(d => d.solution).filter(Boolean))];
-                const solutionBadges = uniqueSolutions.map(s => 
-                    `<span class="inline-flex items-center gap-2 bg-gradient-to-r from-cyan-500 to-blue-500 text-white px-4 py-2 rounded-full text-sm font-bold shadow-lg">${s}</span>`
-                ).join(' ');
-                
-                const pmEngineerHTML = group.pmData ? `<div class="mt-6 pt-6 border-t border-gray-200"><h4 class="font-bold text-gray-800 mb-4 flex items-center gap-2 text-lg"><span class="text-2xl">📋</span>ข้อมูล PM Engineer</h4><div class="grid grid-cols-1 sm:grid-cols-2 gap-4"><div class="info-card rounded-xl p-4 shadow-md"><dt class="data-label mb-2">ผู้รับผิดชอบ</dt><dd class="text-gray-900 font-bold text-lg">${group.pmData.personInCharge || '-'}</dd></div><div class="info-card rounded-xl p-4 shadow-md"><dt class="data-label mb-2">เซลล์ที่ดูแล</dt><dd class="text-gray-900 font-bold text-lg">${group.pmData.salesperson || '-'}</dd></div><div class="info-card rounded-xl p-4 shadow-md"><dt class="data-label mb-2">ความถี่</dt><dd class="text-gray-900 font-bold text-lg">${group.pmData.frequency || '-'}</dd></div><div class="info-card rounded-xl p-4 shadow-md"><dt class="data-label mb-2">เดือน</dt><dd class="text-slate-900 font-medium text-sm">${group.pmData.month || '-'}</dd></div></div></div>` : '';
-                
-                return `
-                    <div class="card-container bg-white rounded-2xl shadow-xl border-2 border-gray-100 overflow-hidden hover:border-indigo-200">
-                        <div class="p-6 bg-gradient-to-r from-white to-gray-50 cursor-pointer hover:from-indigo-50 hover:to-purple-50 transition-all" data-toggle-index="${index}">
-                            <div class="flex items-start justify-between gap-4">
-                                <div class="flex-1 min-w-0">
-                                    <div class="flex items-center gap-3 mb-4 flex-wrap">
-                                        <h3 class="text-3xl font-bold text-gray-900 flex items-center gap-2"><span class="text-3xl">🏢</span> ${group.customer}</h3>
-                                        <span class="inline-flex items-center gap-2 bg-gradient-to-r from-indigo-500 to-purple-500 text-white px-4 py-2 rounded-full text-sm font-bold shadow-lg">CI: ${group.ci}</span>
-                                        ${solutionBadges} </div>
-                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
-                                        <div class="bg-blue-50 rounded-lg p-3 border-l-4 border-blue-500"><dt class="data-label mb-1">👨‍🔬 ผู้ทดสอบ</dt><dd class="text-gray-900 font-bold">${group.tester || '-'}</dd></div>
-                                        <div class="bg-green-50 rounded-lg p-3 border-l-4 border-green-500"><dt class="data-label mb-1">💼 เซลล์</dt><dd class="text-gray-900 font-bold">${group.salesperson || '-'}</dd></div>
-                                        <div class="bg-amber-50 rounded-lg p-3 border-l-4 border-amber-500"><dt class="data-label mb-1">📅 วันที่ร้องขอ</dt><dd class="text-gray-900 font-bold">${group.requestDate || '-'}</dd></div>
-                                        <div class="bg-rose-50 rounded-lg p-3 border-l-4 border-rose-500"><dt class="data-label mb-1">🕐 แก้ไขล่าสุด</dt><dd class="text-gray-900 font-bold">${group.modifiedTime || '-'}</dd></div>
-                                    </div>
-                                </div>
-                                <div class="flex flex-col items-end gap-4 flex-wrap justify-end">
-                                    <div class="flex flex-wrap gap-2 justify-end">${sBadges}</div>
-                                    <span class="arrow-icon text-indigo-400 text-2xl font-bold">▼</span>
+            let senderName = isMine ? 'คุณ' : (data.name || data.email.split('@')[0]);
+            
+            const senderDiv = document.createElement('div');
+            senderDiv.className = 'chat-bubble-sender';
+            senderDiv.textContent = senderName;
+
+            const textDiv = document.createElement('div');
+            textDiv.textContent = data.text;
+
+            bubble.appendChild(senderDiv);
+            bubble.appendChild(textDiv);
+            
+            chatMessages.appendChild(bubble); 
+            
+            chatMessages.parentElement.scrollTop = chatMessages.parentElement.scrollHeight;
+        }
+
+        // ฟังก์ชันพับ/กางแชท (เหมือนเดิม)
+        chatHeader.addEventListener('click', () => {
+            chatContainer.classList.toggle('hidden');
+            chatToggle.textContent = chatContainer.classList.contains('hidden') ? '▲' : '▼';
+        });
+        
+        // =============================================
+        // 🔥 ส่วนของ FIREBASE CHAT END
+        // =============================================
+
+
+        //
+        // --- โค้ด DASHBOARD เดิมของคุณ (ไม่ต้องแก้ไข) ---
+        //
+        async function loadData() {
+            if (!state.scriptUrl) { openSettings(); return; }
+            setLoadingState(true);
+            hideError('main');
+            elements.content.innerHTML = '<div class="flex justify-center py-16"><div class="spinner"></div></div>';
+            try {
+                const response = await fetch(state.scriptUrl + '?cacheBust=' + new Date().getTime());
+                const data = await response.json();
+                if (!data) { throw new Error("ได้รับข้อมูลว่างเปล่า (null)"); }
+                if (data.error) { throw new Error(data.error); }
+                const pmEngineerMap = createPmEngineerMap(data.engi || []);
+                state.allData = groupProductData(data.product || [], pmEngineerMap);
+                populateFilterDropdowns();
+                renderContent();
+            } catch (error) { showError('main', `เกิดข้อผิดพลาด: ${error.message}`); } 
+            finally { setLoadingState(false); }
+        }
+        
+        function createPmEngineerMap(rows) { const map = new Map(); if (rows.length < 2) return map; const monthHeaders = rows[0].slice(3, 15); for (let i = 1; i < rows.length; i++) { const row = rows[i].map(c => String(c || '').trim()); const customer = row[0], ci = row[1]; if (customer && ci) { const key = `${customer}_${ci}`; const monthInfos = []; for (let j = 0; j < monthHeaders.length; j++) { if (row[j + 3]) { monthInfos.push(`${row[j + 3]} ${monthHeaders[j]}`); } } map.set(key, { frequency: row[2], month: monthInfos.join(', ') || '-', personInCharge: row[15], salesperson: row[16] }); } } return map; }
+        function groupProductData(rows, pmEngineerMap) {
+            const groupedData = [];
+            let currentGroup = null;
+            for (let i = 1; i < rows.length; i++) {
+                const row = rows[i].map(c => String(c || '').trim());
+                const [workOrder, salesperson, requestDateRaw, customer, ci, solution, device, brand, protocol, features, result, notes, tester, date, modifiedTimeRaw] = row; 
+                if (workOrder) {
+                    if (currentGroup) groupedData.push(currentGroup);
+                    let formattedTestDate = date ? new Date(date).toLocaleDateString('th-TH', { year: 'numeric', month: 'short', day: 'numeric' }) : '-';
+                    let formattedRequestDate = requestDateRaw ? new Date(requestDateRaw).toLocaleDateString('th-TH', { year: 'numeric', month: 'short', day: 'numeric' }) : '-';
+                    currentGroup = { 
+                        customer, salesperson, ci, tester, 
+                        date: formattedTestDate,
+                        requestDate: formattedRequestDate,
+                        modifiedTime: formatSheetTime(modifiedTimeRaw),
+                        devices: [], statusCount: { passed: 0, failed: 0, pending: 0 }, 
+                        pmData: pmEngineerMap.get(`${customer}_${ci}`) || null 
+                    };
+                }
+                if ((device || solution || brand) && currentGroup) { 
+                    const res = result.toLowerCase();
+                    if (res.includes('ไม่ผ่าน')) currentGroup.statusCount.failed++; 
+                    else if (res.includes('ผ่าน')) currentGroup.statusCount.passed++; 
+                    else currentGroup.statusCount.pending++;
+                    currentGroup.devices.push({ solution, device, brand, protocol, features, result, notes, date });
+                }
+            }
+            if (currentGroup) groupedData.push(currentGroup);
+            return groupedData;
+        }
+        function formatSheetTime(dateTimeString) { if (!dateTimeString) return '-'; try { const dateObj = new Date(dateTimeString); if (isNaN(dateObj.getTime())) return dateTimeString; return dateObj.toLocaleString('th-TH', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }); } catch (e) { return dateTimeString; } }
+        function populateFilterDropdowns() { const customers = new Set(); const testers = new Set(); const salespeople = new Set(); state.allData.forEach(group => { if (group.customer) customers.add(group.customer.trim()); if (group.tester) testers.add(group.tester.trim()); if (group.salesperson) salespeople.add(group.salesperson.trim()); }); const sortedCustomers = Array.from(customers).sort((a, b) => a.localeCompare(b, 'th')); elements.customerFilter.innerHTML = '<option value="">ทุกลูกค้า</option>' + sortedCustomers.map(n => `<option value="${n}">${n}</option>`).join(''); elements.customerFilter.value = state.filters.customer; const sortedTesters = Array.from(testers).sort((a, b) => a.localeCompare(b, 'th')); elements.testerFilter.innerHTML = '<option value="">ทุกผู้ทดสอบ</option>' + sortedTesters.map(n => `<option value="${n}">${n}</option>`).join(''); elements.testerFilter.value = state.filters.tester; const sortedSalespeople = Array.from(salespeople).sort((a, b) => a.localeCompare(b, 'th')); elements.salespersonFilter.innerHTML = '<option value="">ทุกเซลล์</option>' + sortedSalespeople.map(n => `<option value="${n}">${n}</option>`).join(''); elements.salespersonFilter.value = state.filters.salesperson;}
+        function updateActiveFilters() {
+            const activeFilterTags = [];
+            const filterMap = { customer: { label: 'ลูกค้า', icon: '👤' }, tester: { label: 'ผู้ทดสอบ', icon: '🧪' }, salesperson: { label: 'เซลล์', icon: '💼' }, status: { label: 'สถานะ', icon: '✓' }, month: { label: 'เดือน', icon: '📅' } };
+            Object.keys(state.filters).forEach(key => {
+                if (state.filters[key]) {
+                    const info = filterMap[key];
+                    activeFilterTags.push(`<div class="inline-flex items-center gap-2 bg-indigo-100 text-indigo-800 px-3 py-1.5 rounded-full text-sm font-semibold"><span>${info.icon}</span><span>${info.label}: ${state.filters[key]}</span><button class="ml-1 hover:bg-indigo-200 rounded-full p-0.5" data-clear-filter="${key}">✕</button></div>`);
+                }
+            });
+            if (activeFilterTags.length > 0) { elements.activeFilters.classList.remove('hidden'); elements.activeFiltersList.innerHTML = activeFilterTags.join(''); } 
+            else { elements.activeFilters.classList.add('hidden'); }
+        }
+        function renderContent() { const { customer, tester, salesperson, status, month } = state.filters; let processedData = state.allData.filter(group => (!customer || group.customer === customer) && (!tester || group.tester === tester) && (!salesperson || group.salesperson === salesperson) && (!month || (group.pmData && group.pmData.month && group.pmData.month.includes(month)))); if (status) { processedData = processedData.map(group => ({ ...group, devices: group.devices.filter(device => device.result.includes(status)) })).filter(group => group.devices.length > 0); } updateActiveFilters(); if (processedData.length === 0) { elements.content.innerHTML = `<div class="bg-white rounded-2xl shadow-lg p-16 text-center"><div class="text-6xl mb-4">🔍</div><p class="text-gray-800 text-xl font-bold mb-2">ไม่พบข้อมูล</p><p class="text-gray-500 text-sm">ลองปรับเปลี่ยนการกรองข้อมูลของคุณ</p></div>`; return; } elements.content.innerHTML = processedData.map((g, i) => createGroupCardHTML(g, i)).join(''); }
+        
+        function createGroupCardHTML(group, index) { 
+            const statuses = [{count:group.statusCount.passed,label:'ผ่าน',icon:'✓',color:'bg-emerald-500 text-white shadow-lg shadow-emerald-200'},{count:group.statusCount.failed,label:'ไม่ผ่าน',icon:'✕',color:'bg-rose-500 text-white shadow-lg shadow-rose-200'},{count:group.statusCount.pending,label:'รอทดสอบ',icon:'◌',color:'bg-slate-400 text-white shadow-lg shadow-slate-200'}];
+            const sBadges = statuses.filter(s => s.count > 0).map(s => `<div class="status-badge ${s.color}"><span>${s.icon}</span> <strong>${s.count}</strong> ${s.label}</div>`).join('');
+            
+            const uniqueSolutions = [...new Set(group.devices.map(d => d.solution).filter(Boolean))];
+            const solutionBadges = uniqueSolutions.map(s => 
+                `<span class="inline-flex items-center gap-2 bg-gradient-to-r from-cyan-500 to-blue-500 text-white px-4 py-2 rounded-full text-sm font-bold shadow-lg">${s}</span>`
+            ).join(' ');
+            
+            const pmEngineerHTML = group.pmData ? `<div class="mt-6 pt-6 border-t border-gray-200"><h4 class="font-bold text-gray-800 mb-4 flex items-center gap-2 text-lg"><span class="text-2xl">📋</span>ข้อมูล PM Engineer</h4><div class="grid grid-cols-1 sm:grid-cols-2 gap-4"><div class="info-card rounded-xl p-4 shadow-md"><dt class="data-label mb-2">ผู้รับผิดชอบ</dt><dd class="text-gray-900 font-bold text-lg">${group.pmData.personInCharge || '-'}</dd></div><div class="info-card rounded-xl p-4 shadow-md"><dt class="data-label mb-2">เซลล์ที่ดูแล</dt><dd class="text-gray-900 font-bold text-lg">${group.pmData.salesperson || '-'}</dd></div><div class="info-card rounded-xl p-4 shadow-md"><dt class="data-label mb-2">ความถี่</dt><dd class="text-gray-900 font-bold text-lg">${group.pmData.frequency || '-'}</dd></div><div class="info-card rounded-xl p-4 shadow-md"><dt class="data-label mb-2">เดือน</dt><dd class="text-slate-900 font-medium text-sm">${group.pmData.month || '-'}</dd></div></div></div>` : '';
+            
+            return `
+                <div class="card-container bg-white rounded-2xl shadow-xl border-2 border-gray-100 overflow-hidden hover:border-indigo-200">
+                    <div class="p-6 bg-gradient-to-r from-white to-gray-50 cursor-pointer hover:from-indigo-50 hover:to-purple-50 transition-all" data-toggle-index="${index}">
+                        <div class="flex items-start justify-between gap-4">
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center gap-3 mb-4 flex-wrap">
+                                    <h3 class="text-3xl font-bold text-gray-900 flex items-center gap-2"><span class="text-3xl">🏢</span> ${group.customer}</h3>
+                                    <span class="inline-flex items-center gap-2 bg-gradient-to-r from-indigo-500 to-purple-500 text-white px-4 py-2 rounded-full text-sm font-bold shadow-lg">CI: ${group.ci}</span>
+                                    ${solutionBadges} </div>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+                                    <div class="bg-blue-50 rounded-lg p-3 border-l-4 border-blue-500"><dt class="data-label mb-1">👨‍🔬 ผู้ทดสอบ</dt><dd class="text-gray-900 font-bold">${group.tester || '-'}</dd></div>
+                                    <div class="bg-green-50 rounded-lg p-3 border-l-4 border-green-500"><dt class="data-label mb-1">💼 เซลล์</dt><dd class="text-gray-900 font-bold">${group.salesperson || '-'}</dd></div>
+                                    <div class="bg-amber-50 rounded-lg p-3 border-l-4 border-amber-500"><dt class="data-label mb-1">📅 วันที่ร้องขอ</dt><dd class="text-gray-900 font-bold">${group.requestDate || '-'}</dd></div>
+                                    <div class="bg-rose-50 rounded-lg p-3 border-l-4 border-rose-500"><dt class="data-label mb-1">🕐 แก้ไขล่าสุด</dt><dd class="text-gray-900 font-bold">${group.modifiedTime || '-'}</dd></div>
                                 </div>
                             </div>
-                        </div>
-                        <div class="details-content">
-                            <div class="px-6 py-4 bg-gray-50 border-t-2 border-gray-200 space-y-4">
-                                <h4 class="font-bold text-gray-800 mb-4 flex items-center gap-2 text-lg"><span class="text-2xl">🔧</span>รายการอุปกรณ์</h4>
-                                ${group.devices.map(createDeviceRowHTML).join('')}
-                                ${pmEngineerHTML}
+                            <div class="flex flex-col items-end gap-4 flex-wrap justify-end">
+                                <div class="flex flex-wrap gap-2 justify-end">${sBadges}</div>
+                                <span class="arrow-icon text-indigo-400 text-2xl font-bold">▼</span>
                             </div>
                         </div>
                     </div>
-                `;
-            }
+                    <div class="details-content">
+                        <div class="px-6 py-4 bg-gray-50 border-t-2 border-gray-200 space-y-4">
+                            <h4 class="font-bold text-gray-800 mb-4 flex items-center gap-2 text-lg"><span class="text-2xl">🔧</span>รายการอุปกรณ์</h4>
+                            ${group.devices.map(createDeviceRowHTML).join('')}
+                            ${pmEngineerHTML}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
 
-            function createDeviceRowHTML(device) { const details=[{label:'💡 โซลูชัน',value:device.solution},{label:'🏷️ แบรนด์/รุ่น',value:device.brand},{label:'🔌 โปรโตคอล',value:device.protocol},{label:'⚙️ ฟีเจอร์',value:device.features},{label:'📝 หมายเหตุ',value:device.notes},{label:'📅 วันที่ทดสอบ',value:formatDeviceDate(device.date)}];const dhtml=details.map(d=>d.value?`<dt class="data-label">${d.label}</dt><dd class="text-gray-800 col-span-2 font-medium">${d.value}</dd>`:'').join('');return`<div class="border-l-4 ${getStatusBorderColor(device.result)} pl-5 py-4 bg-white rounded-r-xl shadow-md hover:shadow-lg transition-all"><div class="flex items-start justify-between mb-4 gap-3 flex-wrap"><h4 class="font-bold text-xl text-gray-900 flex items-center gap-2"><span class="text-2xl">📱</span> ${device.device||'อุปกรณ์'}</h4><span class="px-4 py-2 rounded-xl text-sm font-bold shadow-lg ${getStatusColorClass(device.result)}">${device.result||'รอทดสอบ'}</span></div>${dhtml?`<div class="grid grid-cols-3 gap-x-4 gap-y-3 text-sm">${dhtml}</div>`:''}</div>`;}
-            function formatDeviceDate(dateString) { if (!dateString) return '-'; try { return new Date(dateString).toLocaleDateString('th-TH', { year: 'numeric', month: 'short', day: 'numeric' }); } catch (e) { return dateString; } }
-            function getStatusColorClass(s) { s=(s||'').toLowerCase();if(s.includes('ไม่ผ่าน'))return'bg-gradient-to-r from-rose-500 to-red-600 text-white';if(s.includes('ผ่าน'))return'bg-gradient-to-r from-emerald-500 to-green-600 text-white';return'bg-gradient-to-r from-slate-400 to-gray-500 text-white';}
-            function getStatusBorderColor(s) { s=(s||'').toLowerCase();if(s.includes('ไม่ผ่าน'))return'border-rose-500';if(s.includes('ผ่าน'))return'border-emerald-500';return'border-slate-400';}
-            function openSettings() { elements.urlInput.value = state.scriptUrl || ''; elements.settingsModal.classList.remove('hidden'); }
-            function closeSettings() { elements.settingsModal.classList.add('hidden'); }
-            function saveSettings() { const u = elements.urlInput.value.trim(); if (!u) { showError('settings', 'กรุณาใส่ URL'); return; } if (!u.endsWith('/exec')) { showError('settings', 'URL ไม่ถูกต้อง'); return; } state.scriptUrl = u; localStorage.setItem('scriptUrl', u); closeSettings(); loadData(); updateAutoRefresh(); }
-            function updateAutoRefresh() { const s = parseInt(elements.refreshInterval.value, 10); localStorage.setItem('refreshInterval', s); if (state.autoRefreshTimer) clearInterval(state.autoRefreshTimer); if (s > 0) state.autoRefreshTimer = setInterval(loadData, s * 1000); }
-            function getInitialUrl() { const p = new URLSearchParams(window.location.search); let u = p.get('url'); const a = p.get('api'); if (!u && a) u = `https://script.google.com/macros/s/${a}/exec`; if (u) localStorage.setItem('scriptUrl', u); return localStorage.getItem('scriptUrl'); }
-            function setLoadingState(L) { elements.refreshBtn.disabled = L; elements.refreshBtn.querySelector('span').innerHTML = L ? '⏳' : '🔄'; }
-            function showError(t, m) { const e = t === 'main' ? elements.mainError : elements.settingsError; e.innerHTML = m.replace(/\n/g, '<br>'); e.classList.remove('hidden'); }
-            function hideError(t) { const e = t === 'main' ? elements.mainError : elements.settingsError; e.classList.add('hidden'); }
-            
-            function clearAllFilters() {
-                state.filters = { customer: '', tester: '', salesperson: '', status: '', month: '' };
-                elements.customerFilter.value = '';
-                elements.testerFilter.value = '';
-                elements.salespersonFilter.value = '';
-                elements.statusFilter.value = '';
-                elements.monthFilter.value = '';
-                renderContent();
-            }
+        function createDeviceRowHTML(device) { const details=[{label:'💡 โซลูชัน',value:device.solution},{label:'🏷️ แบรนด์/รุ่น',value:device.brand},{label:'🔌 โปรโตคอล',value:device.protocol},{label:'⚙️ ฟีเจอร์',value:device.features},{label:'📝 หมายเหตุ',value:device.notes},{label:'📅 วันที่ทดสอบ',value:formatDeviceDate(device.date)}];const dhtml=details.map(d=>d.value?`<dt class="data-label">${d.label}</dt><dd class="text-gray-800 col-span-2 font-medium">${d.value}</dd>`:'').join('');return`<div class="border-l-4 ${getStatusBorderColor(device.result)} pl-5 py-4 bg-white rounded-r-xl shadow-md hover:shadow-lg transition-all"><div class="flex items-start justify-between mb-4 gap-3 flex-wrap"><h4 class="font-bold text-xl text-gray-900 flex items-center gap-2"><span class="text-2xl">📱</span> ${device.device||'อุปกรณ์'}</h4><span class="px-4 py-2 rounded-xl text-sm font-bold shadow-lg ${getStatusColorClass(device.result)}">${device.result||'รอทดสอบ'}</span></div>${dhtml?`<div class="grid grid-cols-3 gap-x-4 gap-y-3 text-sm">${dhtml}</div>`:''}</div>`;}
+        function formatDeviceDate(dateString) { if (!dateString) return '-'; try { return new Date(dateString).toLocaleDateString('th-TH', { year: 'numeric', month: 'short', day: 'numeric' }); } catch (e) { return dateString; } }
+        function getStatusColorClass(s) { s=(s||'').toLowerCase();if(s.includes('ไม่ผ่าน'))return'bg-gradient-to-r from-rose-500 to-red-600 text-white';if(s.includes('ผ่าน'))return'bg-gradient-to-r from-emerald-500 to-green-600 text-white';return'bg-gradient-to-r from-slate-400 to-gray-500 text-white';}
+        function getStatusBorderColor(s) { s=(s||'').toLowerCase();if(s.includes('ไม่ผ่าน'))return'border-rose-500';if(s.includes('ผ่าน'))return'border-emerald-500';return'border-slate-400';}
+        function openSettings() { elements.urlInput.value = state.scriptUrl || ''; elements.settingsModal.classList.remove('hidden'); }
+        function closeSettings() { elements.settingsModal.classList.add('hidden'); }
+        function saveSettings() { const u = elements.urlInput.value.trim(); if (!u) { showError('settings', 'กรุณาใส่ URL'); return; } if (!u.endsWith('/exec')) { showError('settings', 'URL ไม่ถูกต้อง'); return; } state.scriptUrl = u; localStorage.setItem('scriptUrl', u); closeSettings(); loadData(); updateAutoRefresh(); }
+        function updateAutoRefresh() { const s = parseInt(elements.refreshInterval.value, 10); localStorage.setItem('refreshInterval', s); if (state.autoRefreshTimer) clearInterval(state.autoRefreshTimer); if (s > 0) state.autoRefreshTimer = setInterval(loadData, s * 1000); }
+        function getInitialUrl() { const p = new URLSearchParams(window.location.search); let u = p.get('url'); const a = p.get('api'); if (!u && a) u = `https://script.google.com/macros/s/${a}/exec`; if (u) localStorage.setItem('scriptUrl', u); return localStorage.getItem('scriptUrl'); }
+        function setLoadingState(L) { elements.refreshBtn.disabled = L; elements.refreshBtn.querySelector('span').innerHTML = L ? '⏳' : '🔄'; }
+        function showError(t, m) { const e = t === 'main' ? elements.mainError : elements.settingsError; e.innerHTML = m.replace(/\n/g, '<br>'); e.classList.remove('hidden'); }
+        function hideError(t) { const e = t === 'main' ? elements.mainError : elements.settingsError; e.classList.add('hidden'); }
+        
+        function clearAllFilters() {
+            state.filters = { customer: '', tester: '', salesperson: '', status: '', month: '' };
+            elements.customerFilter.value = '';
+            elements.testerFilter.value = '';
+            elements.salespersonFilter.value = '';
+            elements.statusFilter.value = '';
+            elements.monthFilter.value = '';
+            renderContent();
+        }
 
-            function setupEventListeners() {
-                elements.openSettingsBtn.addEventListener('click', openSettings);
-                elements.closeSettingsBtn.addEventListener('click', closeSettings);
-                elements.saveSettingsBtn.addEventListener('click', saveSettings);
-                elements.refreshBtn.addEventListener('click', loadData);
-                elements.refreshInterval.addEventListener('change', updateAutoRefresh);
-                elements.clearFiltersBtn.addEventListener('click', clearAllFilters);
-                elements.customerFilter.addEventListener('change', e => { state.filters.customer = e.target.value; renderContent(); });
-                elements.testerFilter.addEventListener('change', e => { state.filters.tester = e.target.value; renderContent(); });
-                elements.salespersonFilter.addEventListener('change', e => { state.filters.salesperson = e.target.value; renderContent(); });
-                elements.statusFilter.addEventListener('change', e => { state.filters.status = e.target.value; renderContent(); });
-                elements.monthFilter.addEventListener('change', e => { state.filters.month = e.target.value; renderContent(); });
-                elements.content.addEventListener('click', e => { const h = e.target.closest('[data-toggle-index]'); if (h) { const d = h.nextElementSibling; const a = h.querySelector('.arrow-icon'); d.classList.toggle('open'); a.classList.toggle('open'); } });
-                elements.activeFiltersList.addEventListener('click', e => {
-                    const clearBtn = e.target.closest('[data-clear-filter]');
-                    if (clearBtn) {
-                        const filterKey = clearBtn.dataset.clearFilter;
-                        state.filters[filterKey] = '';
-                        elements[filterKey + 'Filter'].value = '';
-                        renderContent();
-                    }
-                });
-            }
-            function initializeApp() { setupEventListeners(); elements.refreshInterval.value = localStorage.getItem('refreshInterval') || '30'; state.scriptUrl = getInitialUrl(); if (state.scriptUrl) { loadData(); updateAutoRefresh(); } else { openSettings(); } }
-            try { initializeApp(); } 
-            catch (e) { console.error("Critical error:", e); if (elements.content) elements.content.innerHTML = `<div class="p-6 bg-rose-100 border-l-4 border-rose-500 text-rose-700 rounded-lg"><h3 class="font-bold text-lg mb-2">เกิดข้อผิดพลาด</h3><p>${e.message}</p></div>`; }
-            // --- โค้ด DASHBOARD เดิมของคุณ END ---
-        });
-    </script>
+        function setupEventListeners() {
+            elements.openSettingsBtn.addEventListener('click', openSettings);
+            elements.closeSettingsBtn.addEventListener('click', closeSettings);
+            elements.saveSettingsBtn.addEventListener('click', saveSettings);
+            elements.refreshBtn.addEventListener('click', loadData);
+            elements.refreshInterval.addEventListener('change', updateAutoRefresh);
+            elements.clearFiltersBtn.addEventListener('click', clearAllFilters);
+            elements.customerFilter.addEventListener('change', e => { state.filters.customer = e.target.value; renderContent(); });
+            elements.testerFilter.addEventListener('click', e => { state.filters.tester = e.target.value; renderContent(); });
+            elements.salespersonFilter.addEventListener('change', e => { state.filters.salesperson = e.target.value; renderContent(); });
+            elements.statusFilter.addEventListener('change', e => { state.filters.status = e.target.value; renderContent(); });
+            elements.monthFilter.addEventListener('change', e => { state.filters.month = e.target.value; renderContent(); });
+            elements.content.addEventListener('click', e => { const h = e.target.closest('[data-toggle-index]'); if (h) { const d = h.nextElementSibling; const a = h.querySelector('.arrow-icon'); d.classList.toggle('open'); a.classList.toggle('open'); } });
+            elements.activeFiltersList.addEventListener('click', e => {
+                const clearBtn = e.target.closest('[data-clear-filter]');
+                if (clearBtn) {
+                    const filterKey = clearBtn.dataset.clearFilter;
+                    state.filters[filterKey] = '';
+                    elements[filterKey + 'Filter'].value = '';
+                    renderContent();
+                }
+            });
+        }
+        function initializeApp() { setupEventListeners(); elements.refreshInterval.value = localStorage.getItem('refreshInterval') || '30'; state.scriptUrl = getInitialUrl(); if (state.scriptUrl) { loadData(); updateAutoRefresh(); } else { openSettings(); } }
+        try { initializeApp(); } 
+        catch (e) { console.error("Critical error:", e); if (elements.content) elements.content.innerHTML = `<div class="p-6 bg-rose-100 border-l-4 border-rose-500 text-rose-700 rounded-lg"><h3 class="font-bold text-lg mb-2">เกิดข้อผิดพลาด</h3><p>${e.message}</p></div>`; }
+        // --- โค้ด DASHBOARD เดิมของคุณ END ---
+    });
+</script>
 </body>
 </html>
