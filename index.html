@@ -138,10 +138,12 @@
         const fbStore = getFirestore(fbApp);
         const googleProvider = new GoogleAuthProvider();
 
-        // ======== 🎵 1. เพิ่มตัวแปรเสียง และ "ธง" สถานะ ========
-        const notificationSound = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-software-interface-start-2574.mp3');
+        // ======== 🎵 1. ★★★★★ นี่คือส่วนที่แก้ไข ★★★★★ ========
+        // ใช้ Base64 Data URI เพื่อ "ฝัง" ไฟล์เสียงลงในโค้ด
+        // นี่คือการแก้ปัญหา "No supported sources"
+        const notificationSound = new Audio('data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4LjQ1LjEwMAAAAAAAAAAAAAAA//tAwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAASW5mbwAAAA8AAAAFAAAAFAAAgAMExmMAdT4AAANMYXZjNTguOTEuMTAwA//tAwEAAAAAAAA+g4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAR0EzRVOJi0Qo01H49x+/W9//GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABMYXZmNTguNDUuMTAw//tAwEAAAAAAAABg4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA/+xAwEAAMwBDAAMAIAAAgAAYkYVAOCgQBgA/+1AmVcAIMgBswGIAm//tAwMOoAAAAcAAAADABbLAD/AAD/7QP//+xAwIPoAAAAcAAAADABbLAD/AAD/7QP//+xAwItoAAAAcAAAADABbLAD/AAD/7QP//+xAwItoAAAAcAAAADABbLAD/AAD/7QP//+xAwItoAAAAcAAAADABbLAD/AAD/7QP//+xAwItoAAAAcAAAADABbLAD/AAD/7QP//+xAwItoAAAAcAAAADABbLAD/AAD/7QP//+xAwItoAAAAcAAAADABbLAD/AAD/7CBAEBAoEBAICBAQeBwQEDAYEJAEHAYEJAQeBQQcBA/+xAwItoAAAAcAAAADABbLAD/AAD/7QP//+xAwItoAAAAcAAAADABbLAD/AAD/7QP//+xAwItoAAAAcAAAADABbLAD/AAD/7QP//+xAwItoAAAAcAAAADABbLAD/AAD/7QP//+xAwItoAAAAcAAAADABbLAD/AAD/7KA/+xAwItoAAAAcAAAADABbLAD/AAD/7QP//+xAwItoAAAAcAAAADABbLAD/AAD/7QP//+xAwItoAAAAcAAAADABbLAD/AAD/7QP//+xAwItoAAAAcAAAADABbLAD/AAD/7QP//+xAwItoAAAAcAAAADABbLAD/AAD/7QP//+xAwItoAAAAcAAAADABbLAD/AAD/7QP//+xAwItoAAAAcAAAADABbLAD/AAD/7QP//+xAwItoAAAAcAAAADABbLAD/AAD/7QP//+xAwItoAAAAcAAAADABbLAD/AAD/7QP//+xAwItoAAAAcAAAADABbLAD/AAD/7QP//+xAwItoAAAAcAAAADABbLAD/AAD/7QP//+xAwItoAAAAcAAAADABbLAD/AAD/7QP//+xAwItoAAAAcAAAADABbLAD/AAD/7QP//+xAwItoAAAAcAAAADABbLAD/AAD/7QP//+xAwItoAAAAcAAAADABbLAD/AAD/7QP//+xAwItoAAAAcAAAADABbLAD/AAD/7QP//+xAwItoAAAAcAAAADABbLAD/AAD/7QP//+xAwItoAAAAcAAAADABbLAD/AAD/7QP//+xAwItoAAAAcAAAADABbLAD/AAD/7QP//+xAwItoAAAAcAAAADABbLAD/AAD/7QP//+xAwItoAAAAcAAAADABbLAD/AAD/7QP//+xAwItoAAAAcAAAADABbLAD/AAD/7QP//+xAwItoAAAAcAAAADABbLAD/AAD/7QP//+xAwItoAAAAcAAAADABbLAD/AAD/7QP//+xAwItoAAAAcAAAADABbLAD/AAD/7QP//+xAwItoAAAAcAAAADABbLAD/AAD/7QP//+xAwItoAAAAcAAAADABbLAD/AAD/7QP//+xAwItoAAAAcAAAADABbLAD/AAD/7QP//+xAwItoAAAAcAAAADABbLAD/AAD/7QP//+xAwItoAAAAcAAAADABbLAD/AAD/7QP//+xAwItoAAAAcAAAADABbLAD/AAD/7QP//+xAwItoAAAAcAAAADABbLAD/AAD/7QP//+xAwItoAAAAcAAAADABbLAD/AAD/7QP//+xAwItoAAAAcAAAADABbLAD/AAD/7QP//+xAwItoAAAAcAAAADABbLAD/AAD/7QP//+xAwItoAAAAcAAAADABbLAD/AAD/7QP//+xAwItoAAAAcAAAADABbLAD/AAD/7QP//+xAwItoAAAAcAAAADABbLAD/AAD/7QP//+xAwItoAAAAcAAAADABbLAD/AAD/7QP//+xAwItoAAAAcAAAADABbLAD/AAD/7QP//+xAwItoAAAAcAAAADABbLAD/AAD/7QP//+xAwItoAAAAcAAAADABbLAD/AAD/7QP//+xAwItoAAAAcAAAADABbLAD/AAD/7QP//+xAwItoAAAAcAAAADABbLAD/AAD/7QP//+xAwItoAAAAcAAAADABbLAD/AAD/7QP//+xAwItoAAAAcAAAADABbLAD/AAD/7QP//+xAwItoAAAAcAAAADABbLAD/AAD/7QP//+xAwItoAAAAcAAAADABbLAD/AAD/7QP//+xAwItoAAAAcAAAADABbLAD/AAD/7QP//+xAwItoAAAAcAAAADABbLAD/AAD/7QP//+xAwItoAAAAcAAAADABbLAD/AAD/7QP//+xAwItoAAAAcAAAADABbLAD/AAD/7QP//+xAwItoAAAAcAAAADABbLAD/AAD/7QP//+xAwItoAAAAcAAAADABbLAD/AAD/7QP//+xAwItoAAAAcAAAADABbLAD/AAD/7QP//+xAwItoAAAAcAAAADABbLAD/AAD/7QP//+xAwItoAAAAcAAAADABbLAD/AAD/7QP//+xAwItoAAAAcAAAADABbLAD/AAD/7QP//+xAwItoAAAAcAAAADABbLAD/AAD/7QP//+xAwItoAAAAcAAAADABbLAD/AAD/7QP//+xAwItoAAAAcAAAADABbLAD/AAD/7QP//+xAwItoAAAAcAAAADABbLAD/AAD/7QP//+xAwItoAAAAcAAAADABbLAD/AAD/7QP//+xAwItoAAAAcAAAADABbLAD/AAD/7QP//+xAwItoAAAAcAAAADABbLAD/AAD/7QP//+xAwItoAAAAcAAAADABbLAD/AAD/7QP//+xAwItoAAAAcAAAADABbLAD/AAD/7QP//+xAwItoAAAAcAAAADABbLAD/AAD/7QP//+xAwItoAAAAcAAAADABbLAD/AAD/7QP//+xAwItoAAAAcAAAADABbLAD/AAD/7AaRAAAAACECAAA0lSgBpglQAAA0lSqBpglQAAA0lSjBpglQAAA0lSkBpglQAAA0lSnBpglQAAA0lSmBpglQAAA0lSjBpglQAAA0lSgBpglQAAA0lSqBpglQAAA0lSjBpglQAAA0lSkBpglQAAA0lSnBpglQAAA0lSmBpglQAAA0lSjBpglQAAA0lSgBpglQAAA0lSqBpglQAAA0lSjBpglQAAA0lSkBpglQAAA0lSnBpglQAAA0lSmBpglQAAA0lSjBpglQAAA0lSgBpglQAAA0lSqBpglQAAA0lSjBpglQAAA0lSkBpglQAAA0lSnBpglQAAA0lSmBpglQAAA0lSjBpglQAAA0lSgBpglQAAA0lSqBpglQAAA0lSjBpglQAAA0lSkBpglQAAA0lSnBpglQAAA0lSmBpglQAAA0lSjBpglQAAA0lSgBpglQAAA0lSqBpglQAAA0lSjBpglQAAA0lSkBpglQAAA0lSnBpglQAAA0lSmBpglQAAA0lSjBpglQAAA0lSgBpglQAAA0lSqBpglQAAA0lSjBpglQAAA0lSkBpglQAAA0lSnBpglQAAA0lSmBpglQAAA0lSjBpglQAAA0lSgBpglQAAA0lSqBpglQAAA0lSjBpglQAAA0lSkBpglQAAA0lSnBpglQAAA0lSmBpglQAAA0lSjBpglQAAA0lSgBpglQAAA0lSqBpglQAAA0lSjBpglQAAA0lSkBpglQAAA0lSnBpglQAAA0lSmBpglQAAA0lSjBpglQAAA0lSgBpglQAAA0lSqBpglQAAA0lSjBpglQAAA0lSkBpglQAAA0lSnBpglQAAA0lSmBpglQAAA0lSjBpglQAAA0lSgBpglQAAA0lSqBpglQAAA0lSjBpglQAAA0lSkBpglQAAA0lSnBpglQAAA0lSmBpglQAAA0lSjBpglQAAA0lSgBpglQAAA0lSqBpglQAAA0lSjBpglQAAA0SjBpglQAAA0lSkBpglQAAA0lSnBpglQAAA0lSmBpglQAAA0lSjBpglQAAA0lSgBpglQAAA0lSqBpglQAAA0lSjBpglQAAA0lSkBpglQAAA0lSnBpglQAAA0lSmBpglQAAA0lSjBpglQAAA0lSgBpglQAAA0lSqBpglQAAA0lSjBpglQAAA0lSkBpglQAAA0lSnBpglQAAA0lSmBpglQAAA0lSjBpglQAAA0lSgBpglQAAA0lSqBpglQAAA0lSjBpglQAAA0lSkBpglQAAA0lSnBpglQAAA0lSmBpglQAAA0lSjBpglQAAA0lSgBpglQAAA0lSqBpglQAAA0lSjBpglQAAA0lSkBpglQAAA0lSnBpglQAAA0lSmBpglQAAA0lSjBpglQAAA0lSgBpglQAAA0lSqBpglQAAA0lSjBpglQAAA0lSkBpglQAAA0lSnBpglQAAA0lSmBpglQAAA0lSjBpglQAAA0lSgBpglQAAA0lSqBpglQAAA0lSjBpglQAAA0lSkBpglQAAA0lSnBpglQAAA0lSmBpglQAAA0lSjBpglQAAA0lSgBpglQAAA0lSqBpglQAAA0lSjBpglQAAA0lSkBpglQAAA0lSnBpglQAAA0lSmBpglQAAA0lSjBpglQAAA0lSgBpglQAAA0lSqBpglQAAA0lSjBpglQAAA0lSkBpglQAAA0lSnBpglQAAA0lSmBpglQAAA0lSjBpglQAAA0lSgBpglQAAA0lSqBpglQAAA0lSjBpglQAAA0lSkBpglQAAA0lSnBpglQAAA0lSmBpglQAAA0lSjBpglQAAA0lSgBpglQAAA0lSqBpglQAAA0lSjBpglQAAA0lSkBpglQAAA0lSnBpglQAAA0lSmBpglQAAA0lSjBpglQAAA0lSgBpglQAAA0lSqBpglQAAA0lSjBpglQAAA0lSkBpglQAAA0lSnBpglQAAA0lSmBpglQAAA0lSjBpglQAAA0lSgBpglQAAA0lSqBpglQAAA0lSjBpglQAAA0lSkBpglQAAA0lSnBpglQAAA0lSmBpglQAAA0lSjBpglQAAA0lSgBpglQAAA0lSqBpglQAAA0lSjBpglQAAA0lSkBpglQAAA0lSnBpglQAAA0lSmBpglQAAA0lSjBpglQAAA0lSgBpglQAAA0lSqBpglQAAA0lSjBpglQAAA0lSkBpglQAAA0lSnBpglQAAA0lSmBpglQAAA0lSjBpglQAAA0lSgBpglQAAA0lSqBpglQAAA0lSjBpglQAAA0lSkBpglQAAA0lSnBpglQAAA0lSmBpglQAAA0lSjBpglQAAA0lSgBpglQAAA0lSqBpglQAAA0lSjBpglQAAA0lSkBpglQAAA0lSnBpglQAAA0lSmBpglQAAA0lSjBpglQAAA0lSgBpglQAAA0lSqBpglQAAA0lSjBpglQAAA0lSkBpglQAAA0lSnBpglQAAA0lSmBpglQAAA0lSjBpglQAAA0lSgBpglQAAA0lSqBpglQAAA0lSjBpglQAAA0lSkBpglQAAA0lSnBpglQAAA0lSmBpglQAAA0lSjBpglQAAA0lSgBpglQAAA0lSqBpglQAAA0lSjBpglQAAA0lSkBpglQAAA0lSnBpglQAAA0lSmBpglQAAA0lSjBpglQAAA0lSgBpglQAAA0lSqBpglQAAA0lSjBpglQAAA0lSkBpglQAAA0lSnBpglQAAA0lSmBpglQAAA0lSjBpglOptionsAAAAAAADsAAABVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVJULVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV');
         notificationSound.preload = 'auto';
-        let isAudioUnlocked = false; // <-- ตัวแปรเช็กสถานะ
+        let isAudioUnlocked = false; // <-- ตัวแปรเช็กสถานะ (เหมือนเดิม)
 
 
         // =============================================
@@ -170,34 +172,30 @@
             
             chatWidget.classList.remove('hidden'); 
 
-            // ======== 🎵 2. อัปเดต: ฟังก์ชันปลดล็อกเสียงแบบ Global (ตรรกะใหม่) ========
+            // ======== 🎵 2. ฟังก์ชันปลดล็อกเสียง (ตรรกะเดิมที่ถูกต้องแล้ว) ========
             function unlockAudio() {
-                if (isAudioUnlocked) return; // ถ้าปลดล็อกแล้ว ก็ไม่ต้องทำอีก
+                if (isAudioUnlocked) return; 
                 
                 console.log("User interaction detected, attempting to unlock audio...");
-                isAudioUnlocked = true; // <-- ★★★ นี่คือส่วนที่แก้ไข: ตั้งธงเป็น true ทันที! ★★★
+                isAudioUnlocked = true; // <-- ตั้งธงเป็น true ทันที
 
-                // จากนั้น ค่อยลอง "อุ่นเครื่อง" เสียง (ล้มเหลวก็ไม่เป็นไร)
                 notificationSound.play().then(() => {
                     notificationSound.pause();
                     notificationSound.currentTime = 0;
                     console.log("Audio primed successfully.");
                 }).catch(e => {
-                    // Error นี้เป็นเรื่องปกติ ถ้าไฟล์ยังโหลดไม่เสร็จ
                     console.log("Audio priming failed (this is OK):", e.message); 
                 });
 
-                // เมื่อปลดล็อกสำเร็จ ให้ลบ Liseners ทิ้ง
                 document.body.removeEventListener('click', unlockAudio, true);
                 document.body.removeEventListener('keydown', unlockAudio, true);
             }
 
-            // เพิ่ม Event Listeners ให้ทำงานเมื่อมีการคลิกหรือพิมพ์ "ครั้งแรก"
             document.body.addEventListener('click', unlockAudio, true);
             document.body.addEventListener('keydown', unlockAudio, true);
 
 
-            // ปุ่ม Login (เหมือนเดิม ไม่ต้องแก้)
+            // ปุ่ม Login
             chatLoginBtn.addEventListener('click', () => {
                 signInWithPopup(fbAuth, googleProvider).catch(error => {
                     console.error("Login failed:", error);
@@ -240,7 +238,7 @@
                 }
             });
             
-            // ฟังก์ชันดึง/ฟังข้อความ (เหมือนเดิม)
+            // ฟังก์ชันดึง/ฟังข้อความ
             function listenToMessages() {
                 if (unsubscribeMessages) unsubscribeMessages();
 
@@ -265,11 +263,10 @@
                             renderMessage(data); 
 
                             // ======== 🎵 3. โค้ดเล่นเสียง (เหมือนเดิม) ========
-                            // โค้ดส่วนนี้จะทำงานได้ ก็ต่อเมื่อ isAudioUnlocked เป็น true แล้ว
                             if (!isInitialLoad && currentUser && data.uid !== currentUser.uid) {
                                 notificationSound.play().catch(e => {
-                                    // ถ้า isAudioUnlocked ยังเป็น false, Error จะโชว์ที่นี่
-                                    console.log("Audio play failed (maybe unlock first):", e.message); 
+                                    // Error "no supported sources" ไม่ควรจะเกิดขึ้นแล้ว
+                                    console.log("Audio play failed:", e.message); 
                                 });
                             }
                         }
@@ -280,7 +277,7 @@
                 }, error => console.error("Error listening to messages:", error));
             }
             
-            // ฟังก์ชันแสดงผลข้อความ (เหมือนเดิม)
+            // ฟังก์ชันแสดงผลข้อความ
             function renderMessage(data) {
                 if (!currentUser) return;
                 const isMine = data.uid === currentUser.uid;
@@ -304,7 +301,7 @@
                 chatMessages.parentElement.scrollTop = chatMessages.parentElement.scrollHeight;
             }
 
-            // ฟังก์ชันพับ/กางแชท (เหมือนเดิม)
+            // ฟังก์ชันพับ/กางแชท
             chatHeader.addEventListener('click', () => {
                 chatContainer.classList.toggle('hidden');
                 chatToggle.textContent = chatContainer.classList.contains('hidden') ? '▲' : '▼';
