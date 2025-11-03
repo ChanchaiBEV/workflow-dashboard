@@ -115,9 +115,9 @@
             query,
             orderBy,
             limit,
-            onSnapshot
-            // (ไม่มี doc, setDoc, deleteDoc)
-        } from "https.gstatic.com/firebasejs/12.5.0/firebase-firestore.js";
+            onSnapshot,
+            // ลบ doc, setDoc, deleteDoc ออก
+        } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-firestore.js";
 
         
         // =============================================
@@ -145,7 +145,10 @@
         notificationSound.preload = 'auto';
         let isAudioUnlocked = false; 
 
-        // (ไม่มีตัวแปร Typing)
+        // ======== ✍️ 1. ลบตัวแปร Typing Indicator ออก ========
+        // (ไม่มี typingTimeout)
+        // (ไม่มี unsubscribeTyping)
+
 
         // =============================================
         // 🚀 โค้ดทั้งหมดของแอป (Dashboard + Chat)
@@ -170,7 +173,7 @@
             const chatMessages = document.getElementById('chatMessages');
             const chatForm = document.getElementById('chatForm');
             const chatInput = document.getElementById('chatInput');
-            // (ไม่มี typingIndicator)
+            // (ไม่มี typingIndicator element)
             
             chatWidget.classList.remove('hidden'); 
 
@@ -196,7 +199,11 @@
                 });
             });
 
-            // (ไม่มีฟังก์ชัน Typing)
+            // ======== ✍️ 2. ลบฟังก์ชัน Typing Indicator ออก ========
+            // (ไม่มี stopTyping)
+            // (ไม่มี notifyUserTyping)
+            // (ไม่มี event listener ของ chatInput)
+
 
             // จัดการการส่งข้อความ
             chatForm.addEventListener('submit', async (e) => {
@@ -212,6 +219,7 @@
                             createdAt: serverTimestamp()
                         });
                         chatInput.value = ''; 
+                        // (ไม่มี stopTyping)
                     } catch (err) {
                         console.error("Error sending message:", err);
                     }
@@ -258,6 +266,7 @@
                 }, error => console.error("Error listening to messages:", error));
             }
 
+            // ======== ✍️ 3. ลบฟังก์ชัน "ฟัง" สถานะการพิมพ์ ========
             // (ไม่มี listenToTypingStatus)
             
             // ฟังก์ชันแสดงผลข้อความ
@@ -405,11 +414,12 @@
             function formatDeviceDate(dateString) { if (!dateString) return '-'; try { return new Date(dateString).toLocaleDateString('th-TH', { year: 'numeric', month: 'short', day: 'numeric' }); } catch (e) { return dateString; } }
             function getStatusColorClass(s) { s=(s||'').toLowerCase();if(s.includes('ไม่ผ่าน'))return'bg-gradient-to-r from-rose-500 to-red-600 text-white';if(s.includes('ผ่าน'))return'bg-gradient-to-r from-emerald-500 to-green-600 text-white';return'bg-gradient-to-r from-slate-400 to-gray-500 text-white';}
             function getStatusBorderColor(s) { s=(s||'').toLowerCase();if(s.includes('ไม่ผ่าน'))return'border-rose-500';if(s.includes('ผ่าน'))return'border-emerald-500';return'border-slate-400';}
-            
-            // ======== ★★★★★ โค้ดที่ถูกต้อง (ไม่มี Pos) ★★★★★ ========
             function openSettings() { elements.urlInput.value = state.scriptUrl || ''; elements.settingsModal.classList.remove('hidden'); }
+            
+            // ======== ★★★★★ นี่คือจุดที่แก้ไข ★★★★★ ========
+            // ลบ `Pos` ที่ตกค้างออกไป (ตรวจสอบแล้วว่าไม่มี)
             function closeSettings() { elements.settingsModal.classList.add('hidden'); }
-            // ================================================
+            // =============================================
 
             function saveSettings() { const u = elements.urlInput.value.trim(); if (!u) { showError('settings', 'กรุณาใส่ URL'); return; } if (!u.endsWith('/exec')) { showError('settings', 'URL ไม่ถูกต้อง'); return; } state.scriptUrl = u; localStorage.setItem('scriptUrl', u); closeSettings(); loadData(); updateAutoRefresh(); }
             function updateAutoRefresh() { const s = parseInt(elements.refreshInterval.value, 10); localStorage.setItem('refreshInterval', s); if (state.autoRefreshTimer) clearInterval(state.autoRefreshTimer); if (s > 0) state.autoRefreshTimer = setInterval(loadData, s * 1000); }
@@ -437,9 +447,10 @@
                 elements.clearFiltersBtn.addEventListener('click', clearAllFilters);
                 elements.customerFilter.addEventListener('change', e => { state.filters.customer = e.target.value; renderContent(); });
                 
-                // ======== ★★★★★ แก้ไข 'click' เป็น 'change' ★★★★★ ========
+                // ======== ★★★★★ นี่คือจุดที่แก้ไข (อีกจุด) ★★★★★ ========
+                // แก้บั๊ก 'click' ที่ผมเผลอใส่เข้าไปใน filter
                 elements.testerFilter.addEventListener('change', e => { state.filters.tester = e.target.value; renderContent(); }); 
-                // ==================================================
+                // =============================================
 
                 elements.salespersonFilter.addEventListener('change', e => { state.filters.salesperson = e.target.value; renderContent(); });
                 elements.statusFilter.addEventListener('change', e => { state.filters.status = e.target.value; renderContent(); });
@@ -456,13 +467,8 @@
                 });
             }
             function initializeApp() { setupEventListeners(); elements.refreshInterval.value = localStorage.getItem('refreshInterval') || '30'; state.scriptUrl = getInitialUrl(); if (state.scriptUrl) { loadData(); updateAutoRefresh(); } else { openSettings(); } }
-            
-            try { 
-                initializeApp(); 
-            } catch (e) { 
-                console.error("Critical error:", e); 
-                if (elements.content) elements.content.innerHTML = `<div class="p-6 bg-rose-100 border-l-4 border-rose-500 text-rose-700 rounded-lg"><h3 class="font-bold text-lg mb-2">เกิดข้อผิดพลาด</h3><p>${e.message}</p></div>`; 
-            }
+            try { initializeApp(); } 
+            catch (e) { console.error("Critical error:", e); if (elements.content) elements.content.innerHTML = `<div class="p-6 bg-rose-100 border-l-4 border-rose-500 text-rose-700 rounded-lg"><h3 class="font-bold text-lg mb-2">เกิดข้อผิดพลาด</h3><p>${e.message}</p></div>`; }
             // --- โค้ด DASHBOARD เดิมของคุณ END ---
         });
     </script>
