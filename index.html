@@ -141,7 +141,7 @@
         // ======== 🎵 1. เพิ่มตัวแปรเสียง และ "ธง" สถานะ ========
         const notificationSound = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-software-interface-start-2574.mp3');
         notificationSound.preload = 'auto';
-        let isAudioUnlocked = false; // <-- ตัวแปรใหม่สำหรับเช็กสถานะ
+        let isAudioUnlocked = false; // <-- ตัวแปรเช็กสถานะ
 
 
         // =============================================
@@ -170,32 +170,35 @@
             
             chatWidget.classList.remove('hidden'); 
 
-            // ======== 🎵 2. อัปเดต: ฟังก์ชันปลดล็อกเสียงแบบ Global ========
+            // ======== 🎵 2. อัปเดต: ฟังก์ชันปลดล็อกเสียงแบบ Global (ตรรกะใหม่) ========
             function unlockAudio() {
                 if (isAudioUnlocked) return; // ถ้าปลดล็อกแล้ว ก็ไม่ต้องทำอีก
+                
+                console.log("User interaction detected, attempting to unlock audio...");
+                isAudioUnlocked = true; // <-- ★★★ นี่คือส่วนที่แก้ไข: ตั้งธงเป็น true ทันที! ★★★
 
+                // จากนั้น ค่อยลอง "อุ่นเครื่อง" เสียง (ล้มเหลวก็ไม่เป็นไร)
                 notificationSound.play().then(() => {
                     notificationSound.pause();
                     notificationSound.currentTime = 0;
-                    isAudioUnlocked = true; // ตั้งสถานะว่า "ปลดล็อกแล้ว"
-                    console.log("Audio context unlocked by user interaction.");
-                    // เมื่อปลดล็อกสำเร็จ ให้ลบ Liseners ทิ้ง (เพื่อประสิทธิภาพ)
-                    document.body.removeEventListener('click', unlockAudio, true); // ใช้ capture phase
-                    document.body.removeEventListener('keydown', unlockAudio, true);
+                    console.log("Audio primed successfully.");
                 }).catch(e => {
-                    // ครั้งแรกอาจจะเฟล ไม่เป็นไร เดี๋ยวคลิก/พิมพ์ครั้งหน้าก็ลองใหม่
+                    // Error นี้เป็นเรื่องปกติ ถ้าไฟล์ยังโหลดไม่เสร็จ
+                    console.log("Audio priming failed (this is OK):", e.message); 
                 });
+
+                // เมื่อปลดล็อกสำเร็จ ให้ลบ Liseners ทิ้ง
+                document.body.removeEventListener('click', unlockAudio, true);
+                document.body.removeEventListener('keydown', unlockAudio, true);
             }
 
             // เพิ่ม Event Listeners ให้ทำงานเมื่อมีการคลิกหรือพิมพ์ "ครั้งแรก"
-            // ใช้ capture: true เพื่อให้ทำงานก่อน event ของ element อื่น
             document.body.addEventListener('click', unlockAudio, true);
             document.body.addEventListener('keydown', unlockAudio, true);
 
 
-            // ======== 🎵 3. แก้ไข: ลบโค้ดปลดล็อกออกจากปุ่ม Login ========
+            // ปุ่ม Login (เหมือนเดิม ไม่ต้องแก้)
             chatLoginBtn.addEventListener('click', () => {
-                // (โค้ดปลดล็อกเสียงถูกย้ายไปที่ Global Listeners แล้ว)
                 signInWithPopup(fbAuth, googleProvider).catch(error => {
                     console.error("Login failed:", error);
                 });
@@ -261,10 +264,12 @@
                             
                             renderMessage(data); 
 
-                            // โค้ดเล่นเสียงจะทำงานได้ ก็ต่อเมื่อ isAudioUnlocked เป็น true แล้ว
+                            // ======== 🎵 3. โค้ดเล่นเสียง (เหมือนเดิม) ========
+                            // โค้ดส่วนนี้จะทำงานได้ ก็ต่อเมื่อ isAudioUnlocked เป็น true แล้ว
                             if (!isInitialLoad && currentUser && data.uid !== currentUser.uid) {
                                 notificationSound.play().catch(e => {
-                                    console.log("Audio play failed (maybe unlock first):", e.message);
+                                    // ถ้า isAudioUnlocked ยังเป็น false, Error จะโชว์ที่นี่
+                                    console.log("Audio play failed (maybe unlock first):", e.message); 
                                 });
                             }
                         }
