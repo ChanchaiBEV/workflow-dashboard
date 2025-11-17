@@ -73,10 +73,10 @@
     <div id="chatWidget" class="chat-widget hidden">
         <div id="chatHeader" class="chat-header">
             <span>💬 แชทภายในทีม</span>
-            <span id="chatToggle" class="cursor-pointer">▼</span>
+            <span id="chatToggle" class="cursor-pointer">▲</span>
         </div>
         
-        <div id="chatContainer" class="open">
+        <div id="chatContainer" class="hidden"> 
             <div id="chatSignIn" class="chat-signin">
                 <p class="mb-4 text-gray-700">กรุณา Sign in with Google เพื่อใช้งานแชท</p>
                 <button id="chatLoginBtn">Sign in with Google</button>
@@ -87,7 +87,7 @@
                     <div id="chatMessages" class="chat-messages">
                         </div>
                 </div>
-                
+
                 <form id="chatForm" class="chat-input">
                     <input type="text" id="chatInput" placeholder="พิมพ์ข้อความ..." autocomplete="off" />
                     <button type="submit" id="chatSendBtn">ส่ง</button>
@@ -99,14 +99,14 @@
         // =============================================
         // 🔥 FIREBASE v12 IMPORTS
         // =============================================
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-app.js";
-        import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-analytics.js";
+        import { initializeApp } from "https.gstatic.com/firebasejs/12.5.0/firebase-app.js";
+        import { getAnalytics } from "https.gstatic.com/firebasejs/12.5.0/firebase-analytics.js";
         import {
             getAuth,
             onAuthStateChanged,
             GoogleAuthProvider,
             signInWithPopup
-        } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-auth.js";
+        } from "https.gstatic.com/firebasejs/12.5.0/firebase-auth.js";
         import {
             getFirestore,
             collection,
@@ -116,8 +116,7 @@
             orderBy,
             limit,
             onSnapshot
-            // (ไม่มี doc, setDoc, deleteDoc)
-        } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-firestore.js";
+        } from "https.gstatic.com/firebasejs/12.5.0/firebase-firestore.js";
 
         
         // =============================================
@@ -171,19 +170,18 @@
             
             chatWidget.classList.remove('hidden'); 
 
-            // ======== 🎵 2. ฟังก์ชันปลดล็อกเสียง (อัปเกรด: เพิ่มการขอสิทธิ์ Notification) ★★★★★ ========
+            // ======== 🎵 2. ฟังก์ชันปลดล็อกเสียง + ขอสิทธิ์แจ้งเตือน ★★★★★ ========
             function unlockAudio() {
                 if (isAudioUnlocked) return; 
                 isAudioUnlocked = true;
                 
-                // 1. ปลดล็อกเสียง (เหมือนเดิม)
+                // 1. ปลดล็อกเสียง
                 notificationSound.play().then(() => {
                     notificationSound.pause();
                     notificationSound.currentTime = 0;
                 }).catch(e => {});
 
-                // 2. ★★★ เพิ่ม: ขอสิทธิ์แจ้งเตือน ★★★
-                // (จะทำงานเฉพาะถ้าสถานะยังไม่ได้ 'granted' หรือ 'denied')
+                // 2. ขอสิทธิ์แจ้งเตือน
                 if (Notification.permission !== 'granted' && Notification.permission !== 'denied') {
                     Notification.requestPermission().then(permission => {
                         if (permission === 'granted') {
@@ -194,7 +192,7 @@
                     });
                 }
 
-                // 3. ลบ listener ทิ้ง (เหมือนเดิม)
+                // 3. ลบ listener ทิ้ง
                 document.body.removeEventListener('click', unlockAudio, true);
                 document.body.removeEventListener('keydown', unlockAudio, true);
             }
@@ -246,7 +244,7 @@
                 }
             });
             
-            // ฟังก์ชันดึง/ฟังข้อความ (อัปเกรด: เพิ่มการส่ง Notification) ★★★★★
+            // ฟังก์ชันดึง/ฟังข้อความ (มีแจ้งเตือน) ★★★★★
             function listenToMessages() {
                 if (unsubscribeMessages) unsubscribeMessages();
                 let isInitialLoad = true;
@@ -259,23 +257,21 @@
                             const data = change.doc.data();
                             renderMessage(data); 
                             
-                            // เงื่อนไข: เป็นแชทใหม่ และ ไม่ใช่ของเรา
                             if (!isInitialLoad && currentUser && data.uid !== currentUser.uid) {
                                 
                                 // 1. เล่นเสียง
                                 notificationSound.load(); 
                                 notificationSound.play().catch(e => console.log("Audio play failed:", e.message));
 
-                                // 2. ★★★ เพิ่ม: แสดง Notification ★★★
-                                // (เช็กว่า: ผู้ใช้ซ่อนแท็บอยู่ AND เราได้รับสิทธิ์)
+                                // 2. แสดง Notification
                                 if (document.hidden && Notification.permission === 'granted') {
                                     const senderName = data.name || data.email.split('@')[0];
                                     let body = data.text;
-                                    if (body.length > 100) body = body.substring(0, 100) + '...'; // กันข้อความยาวไป
+                                    if (body.length > 100) body = body.substring(0, 100) + '...'; 
 
                                     new Notification(`ข้อความใหม่จาก ${senderName}`, {
                                         body: body,
-                                        icon: 'https://www.gstatic.com/images/branding/product/2x/chat_48dp.png' // ไอคอน Google Chat
+                                        icon: 'https://www.gstatic.com/images/branding/product/2x/chat_48dp.png'
                                     });
                                 }
                             }
@@ -433,7 +429,7 @@
             function getStatusColorClass(s) { s=(s||'').toLowerCase();if(s.includes('ไม่ผ่าน'))return'bg-gradient-to-r from-rose-500 to-red-600 text-white';if(s.includes('ผ่าน'))return'bg-gradient-to-r from-emerald-500 to-green-600 text-white';return'bg-gradient-to-r from-slate-400 to-gray-500 text-white';}
             function getStatusBorderColor(s) { s=(s||'').toLowerCase();if(s.includes('ไม่ผ่าน'))return'border-rose-500';if(s.includes('ผ่าน'))return'border-emerald-500';return'border-slate-400';}
             
-            // ★★★ โค้ดที่ถูกต้อง (ไม่มี Pos หรือ function ผิด) ★★★
+            // ★★★ โค้ดที่ถูกต้อง (ไม่มี Pos) ★★★
             function openSettings() { elements.urlInput.value = state.scriptUrl || ''; elements.settingsModal.classList.remove('hidden'); }
             function closeSettings() { elements.settingsModal.classList.add('hidden'); }
             // ★★★★★★★★★★★★★★★★★★★★★★★★★
