@@ -115,8 +115,8 @@
             query,
             orderBy,
             limit,
-            onSnapshot,
-            // ลบ doc, setDoc, deleteDoc ออก
+            onSnapshot
+            // (ไม่มี doc, setDoc, deleteDoc)
         } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-firestore.js";
 
         
@@ -145,11 +145,6 @@
         notificationSound.preload = 'auto';
         let isAudioUnlocked = false; 
 
-        // ======== ✍️ 1. ลบตัวแปร Typing Indicator ออก ========
-        // (ไม่มี typingTimeout)
-        // (ไม่มี unsubscribeTyping)
-
-
         // =============================================
         // 🚀 โค้ดทั้งหมดของแอป (Dashboard + Chat)
         // =============================================
@@ -173,18 +168,33 @@
             const chatMessages = document.getElementById('chatMessages');
             const chatForm = document.getElementById('chatForm');
             const chatInput = document.getElementById('chatInput');
-            // (ไม่มี typingIndicator element)
             
             chatWidget.classList.remove('hidden'); 
 
-            // ======== 🎵 2. ฟังก์ชันปลดล็อกเสียง ========
+            // ======== 🎵 2. ฟังก์ชันปลดล็อกเสียง (อัปเกรด: เพิ่มการขอสิทธิ์ Notification) ★★★★★ ========
             function unlockAudio() {
                 if (isAudioUnlocked) return; 
                 isAudioUnlocked = true;
+                
+                // 1. ปลดล็อกเสียง (เหมือนเดิม)
                 notificationSound.play().then(() => {
                     notificationSound.pause();
                     notificationSound.currentTime = 0;
                 }).catch(e => {});
+
+                // 2. ★★★ เพิ่ม: ขอสิทธิ์แจ้งเตือน ★★★
+                // (จะทำงานเฉพาะถ้าสถานะยังไม่ได้ 'granted' หรือ 'denied')
+                if (Notification.permission !== 'granted' && Notification.permission !== 'denied') {
+                    Notification.requestPermission().then(permission => {
+                        if (permission === 'granted') {
+                            console.log("Notification permission granted.");
+                        } else {
+                            console.log("Notification permission denied.");
+                        }
+                    });
+                }
+
+                // 3. ลบ listener ทิ้ง (เหมือนเดิม)
                 document.body.removeEventListener('click', unlockAudio, true);
                 document.body.removeEventListener('keydown', unlockAudio, true);
             }
@@ -198,12 +208,6 @@
                     console.error("Login failed:", error);
                 });
             });
-
-            // ======== ✍️ 2. ลบฟังก์ชัน Typing Indicator ออก ========
-            // (ไม่มี stopTyping)
-            // (ไม่มี notifyUserTyping)
-            // (ไม่มี event listener ของ chatInput)
-
 
             // จัดการการส่งข้อความ
             chatForm.addEventListener('submit', async (e) => {
@@ -219,7 +223,6 @@
                             createdAt: serverTimestamp()
                         });
                         chatInput.value = ''; 
-                        // (ไม่มี stopTyping)
                     } catch (err) {
                         console.error("Error sending message:", err);
                     }
@@ -233,10 +236,8 @@
                     chatSignIn.classList.add('hidden');
                     chatMain.classList.remove('hidden');
                     listenToMessages();
-                    // (ไม่มี listenToTypingStatus)
                 } else {
                     if (unsubscribeMessages) unsubscribeMessages();
-                    // (ไม่มี unsubscribeTyping)
                     
                     currentUser = null;
                     chatSignIn.classList.remove('hidden');
@@ -245,29 +246,44 @@
                 }
             });
             
-            // ฟังก์ชันดึง/ฟังข้อความ
+            // ฟังก์ชันดึง/ฟังข้อความ (อัปเกรด: เพิ่มการส่ง Notification) ★★★★★
             function listenToMessages() {
                 if (unsubscribeMessages) unsubscribeMessages();
                 let isInitialLoad = true;
                 const messagesQuery = query(collection(fbStore, 'messages'), orderBy('createdAt', 'desc'), limit(50));
+                
                 unsubscribeMessages = onSnapshot(messagesQuery, snapshot => {
                     if (isInitialLoad) chatMessages.innerHTML = '';
                     snapshot.docChanges().reverse().forEach(change => {
                         if (change.type === 'added') {
                             const data = change.doc.data();
                             renderMessage(data); 
+                            
+                            // เงื่อนไข: เป็นแชทใหม่ และ ไม่ใช่ของเรา
                             if (!isInitialLoad && currentUser && data.uid !== currentUser.uid) {
+                                
+                                // 1. เล่นเสียง
                                 notificationSound.load(); 
                                 notificationSound.play().catch(e => console.log("Audio play failed:", e.message));
+
+                                // 2. ★★★ เพิ่ม: แสดง Notification ★★★
+                                // (เช็กว่า: ผู้ใช้ซ่อนแท็บอยู่ AND เราได้รับสิทธิ์)
+                                if (document.hidden && Notification.permission === 'granted') {
+                                    const senderName = data.name || data.email.split('@')[0];
+                                    let body = data.text;
+                                    if (body.length > 100) body = body.substring(0, 100) + '...'; // กันข้อความยาวไป
+
+                                    new Notification(`ข้อความใหม่จาก ${senderName}`, {
+                                        body: body,
+                                        icon: 'https://www.gstatic.com/images/branding/product/2x/chat_48dp.png' // ไอคอน Google Chat
+                                    });
+                                }
                             }
                         }
                     });
                     isInitialLoad = false;
                 }, error => console.error("Error listening to messages:", error));
             }
-
-            // ======== ✍️ 3. ลบฟังก์ชัน "ฟัง" สถานะการพิมพ์ ========
-            // (ไม่มี listenToTypingStatus)
             
             // ฟังก์ชันแสดงผลข้อความ
             function renderMessage(data) {
@@ -325,6 +341,7 @@
                 let currentGroup = null;
                 for (let i = 1; i < rows.length; i++) {
                     const row = rows[i].map(c => String(c || '').trim());
+                    // ★★★ ตรวจสอบว่าคอลัมน์ O (15) คือ modifiedTimeRaw ★★★
                     const [workOrder, salesperson, requestDateRaw, customer, ci, solution, device, brand, protocol, features, result, notes, tester, date, modifiedTimeRaw] = row; 
                     if (workOrder) {
                         if (currentGroup) groupedData.push(currentGroup);
@@ -334,7 +351,7 @@
                             customer, salesperson, ci, tester, 
                             date: formattedTestDate,
                             requestDate: formattedRequestDate,
-                            modifiedTime: formatSheetTime(modifiedTimeRaw),
+                            modifiedTime: formatSheetTime(modifiedTimeRaw), // <--- ใช้งานตัวแปรที่ 15
                             devices: [], statusCount: { passed: 0, failed: 0, pending: 0 }, 
                             pmData: pmEngineerMap.get(`${customer}_${ci}`) || null 
                         };
@@ -344,6 +361,7 @@
                         if (res.includes('ไม่ผ่าน')) currentGroup.statusCount.failed++; 
                         else if (res.includes('ผ่าน')) currentGroup.statusCount.passed++; 
                         else currentGroup.statusCount.pending++;
+                        // ★★★ ตรวจสอบว่าคอลัมน์ K (11) คือ result ★★★
                         currentGroup.devices.push({ solution, device, brand, protocol, features, result, notes, date });
                     }
                 }
@@ -414,12 +432,11 @@
             function formatDeviceDate(dateString) { if (!dateString) return '-'; try { return new Date(dateString).toLocaleDateString('th-TH', { year: 'numeric', month: 'short', day: 'numeric' }); } catch (e) { return dateString; } }
             function getStatusColorClass(s) { s=(s||'').toLowerCase();if(s.includes('ไม่ผ่าน'))return'bg-gradient-to-r from-rose-500 to-red-600 text-white';if(s.includes('ผ่าน'))return'bg-gradient-to-r from-emerald-500 to-green-600 text-white';return'bg-gradient-to-r from-slate-400 to-gray-500 text-white';}
             function getStatusBorderColor(s) { s=(s||'').toLowerCase();if(s.includes('ไม่ผ่าน'))return'border-rose-500';if(s.includes('ผ่าน'))return'border-emerald-500';return'border-slate-400';}
-            function openSettings() { elements.urlInput.value = state.scriptUrl || ''; elements.settingsModal.classList.remove('hidden'); }
             
-            // ======== ★★★★★ นี่คือจุดที่แก้ไข ★★★★★ ========
-            // ลบ `Pos` ที่ตกค้างออกไป (ตรวจสอบแล้วว่าไม่มี)
+            // ★★★ โค้ดที่ถูกต้อง (ไม่มี Pos หรือ function ผิด) ★★★
+            function openSettings() { elements.urlInput.value = state.scriptUrl || ''; elements.settingsModal.classList.remove('hidden'); }
             function closeSettings() { elements.settingsModal.classList.add('hidden'); }
-            // =============================================
+            // ★★★★★★★★★★★★★★★★★★★★★★★★★
 
             function saveSettings() { const u = elements.urlInput.value.trim(); if (!u) { showError('settings', 'กรุณาใส่ URL'); return; } if (!u.endsWith('/exec')) { showError('settings', 'URL ไม่ถูกต้อง'); return; } state.scriptUrl = u; localStorage.setItem('scriptUrl', u); closeSettings(); loadData(); updateAutoRefresh(); }
             function updateAutoRefresh() { const s = parseInt(elements.refreshInterval.value, 10); localStorage.setItem('refreshInterval', s); if (state.autoRefreshTimer) clearInterval(state.autoRefreshTimer); if (s > 0) state.autoRefreshTimer = setInterval(loadData, s * 1000); }
@@ -447,10 +464,8 @@
                 elements.clearFiltersBtn.addEventListener('click', clearAllFilters);
                 elements.customerFilter.addEventListener('change', e => { state.filters.customer = e.target.value; renderContent(); });
                 
-                // ======== ★★★★★ นี่คือจุดที่แก้ไข (อีกจุด) ★★★★★ ========
-                // แก้บั๊ก 'click' ที่ผมเผลอใส่เข้าไปใน filter
+                // ★★★ แก้ไข 'click' เป็น 'change' ★★★
                 elements.testerFilter.addEventListener('change', e => { state.filters.tester = e.target.value; renderContent(); }); 
-                // =============================================
 
                 elements.salespersonFilter.addEventListener('change', e => { state.filters.salesperson = e.target.value; renderContent(); });
                 elements.statusFilter.addEventListener('change', e => { state.filters.status = e.target.value; renderContent(); });
@@ -467,8 +482,13 @@
                 });
             }
             function initializeApp() { setupEventListeners(); elements.refreshInterval.value = localStorage.getItem('refreshInterval') || '30'; state.scriptUrl = getInitialUrl(); if (state.scriptUrl) { loadData(); updateAutoRefresh(); } else { openSettings(); } }
-            try { initializeApp(); } 
-            catch (e) { console.error("Critical error:", e); if (elements.content) elements.content.innerHTML = `<div class="p-6 bg-rose-100 border-l-4 border-rose-500 text-rose-700 rounded-lg"><h3 class="font-bold text-lg mb-2">เกิดข้อผิดพลาด</h3><p>${e.message}</p></div>`; }
+            
+            try { 
+                initializeApp(); 
+            } catch (e) { 
+                console.error("Critical error:", e); 
+                if (elements.content) elements.content.innerHTML = `<div class="p-6 bg-rose-100 border-l-4 border-rose-500 text-rose-700 rounded-lg"><h3 class="font-bold text-lg mb-2">เกิดข้อผิดพลาด</h3><p>${e.message}</p></div>`; 
+            }
             // --- โค้ด DASHBOARD เดิมของคุณ END ---
         });
     </script>
