@@ -73,11 +73,9 @@
     <div id="chatWidget" class="chat-widget hidden">
         <div id="chatHeader" class="chat-header">
             <span>💬 แชทภายในทีม</span>
-            <span id="chatToggle" class="cursor-pointer">▲</span>
-        </div>
+            <span id="chatToggle" class="cursor-pointer">▲</span> </div>
         
-        <div id="chatContainer" class="hidden"> 
-            <div id="chatSignIn" class="chat-signin">
+        <div id="chatContainer" class="hidden"> <div id="chatSignIn" class="chat-signin">
                 <p class="mb-4 text-gray-700">กรุณา Sign in with Google เพื่อใช้งานแชท</p>
                 <button id="chatLoginBtn">Sign in with Google</button>
             </div>
@@ -87,7 +85,7 @@
                     <div id="chatMessages" class="chat-messages">
                         </div>
                 </div>
-
+                
                 <form id="chatForm" class="chat-input">
                     <input type="text" id="chatInput" placeholder="พิมพ์ข้อความ..." autocomplete="off" />
                     <button type="submit" id="chatSendBtn">ส่ง</button>
@@ -116,6 +114,7 @@
             orderBy,
             limit,
             onSnapshot
+            // (ไม่มี doc, setDoc, deleteDoc)
         } from "https.gstatic.com/firebasejs/12.5.0/firebase-firestore.js";
 
         
@@ -143,6 +142,8 @@
         const notificationSound = new Audio('notify.mp3'); 
         notificationSound.preload = 'auto';
         let isAudioUnlocked = false; 
+
+        // (ไม่มีตัวแปร Typing)
 
         // =============================================
         // 🚀 โค้ดทั้งหมดของแอป (Dashboard + Chat)
