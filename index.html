@@ -85,7 +85,7 @@
         </div>
         
         <div class="mb-8">
-            <div class="header-gradient rounded-2xl shadow-2xl p-8 text-white"><div class="flex items-start justify-between gap-4 mb-6 flex-wrap"><div><h1 class="text-4xl font-bold mb-2 flex items-center gap-3"><span class="text-5xl">📊</span> BEV Dashboard Test Product & PM Engineer</h1><p class="text-white text-opacity-90 text-sm hidden"></p></div><div class="flex gap-3 flex-wrap"><a href="https://docs.google.com/spreadsheets/d/1K5532IFh_zpI_ZI7TcDedyYedztRvRMEXcdo3BSBvXA/edit?usp=sharing" target="_blank" class="pulse-glow bg-gradient-to-r from-green-400 to-green-600 hover:from-green-500 hover:to-green-700 text-white px-6 py-3 rounded-xl font-bold flex items-center gap-3 shadow-2xl transform hover:scale-105 transition-all"><span class="text-2xl">📜</span><span>เปิด Google Sheet</span></a><button id="refreshBtn" class="bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-4 py-2.5 rounded-lg font-semibold flex items-center gap-2 transition-all"><span>🔄</span> รีเฟรช</button><button id="openSettingsBtn" class="bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-4 py-2.5 rounded-lg font-semibold flex items-center gap-2 transition-all"><span>⚙️</span> ตั้งค่า</button></div></div><div class="bg-black bg-opacity-20 rounded-xl p-4 backdrop-blur-sm"><div class="flex items-center justify-between flex-wrap gap-4"><div class="flex items-center gap-3 hidden"><span class="text-2xl">⏱️</span><span class="font-semibold">รีเฟรชอัตโนมัติ:</span></div><select id="refreshInterval" class="bg-white text-gray-900 border-0 rounded-lg px-4 py-2 text-sm focus:outline-none font-semibold shadow-lg"><option value="0">ปิด</option><option value="30" selected>30 วินาที</option><option value="60">1 นาที</option><option value="120">2 นาที</option></select></div></div></div>
+            <div class="header-gradient rounded-2xl shadow-2xl p-8 text-white"><div class="flex items-start justify-between gap-4 mb-6 flex-wrap"><div><h1 class="text-4xl font-bold mb-2 flex items-center gap-3"><span class="text-5xl">📊</span> BEV Dashboard Test Product & PM Engineer</h1><p class="text-white text-opacity-90 text-sm hidden"></p></div><div class="flex gap-3 flex-wrap"><a href="https://docs.google.com/spreadsheets/d/1K5532IFh_zpI_ZI7TcDedyYedztRvRMEXcdo3BSBvXA/edit?usp=sharing" target="_blank" class="pulse-glow bg-gradient-to-r from-green-400 to-green-600 hover:from-green-500 hover:to-green-700 text-white px-6 py-3 rounded-xl font-bold flex items-center gap-3 shadow-2xl transform hover:scale-105 transition-all"><span class="text-2xl">📜</span><span>เปิด Google Sheet</span></a><button id="refreshBtn" class="bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-4 py-2.5 rounded-lg font-semibold flex items-center gap-2 transition-all"><span>🔄</span> รีเฟรช</button><button id="openSettingsBtn" class="bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-4 py-2.5 rounded-lg font-semibold flex items-center gap-2 transition-all"><span>⚙️</span> ตั้งค่า</button></div></div></div>
             <div id="mainError" class="hidden mt-4 p-4 bg-red-100 border-l-4 border-red-500 text-red-700 text-sm rounded-lg shadow-lg"></div>
         </div>
         
@@ -187,7 +187,6 @@
                 openSettingsBtn: document.getElementById('openSettingsBtn'), 
                 settingsError: document.getElementById('settingsError'), 
                 refreshBtn: document.getElementById('refreshBtn'), 
-                refreshInterval: document.getElementById('refreshInterval'), 
                 mainError: document.getElementById('mainError'), 
                 content: document.getElementById('content'), 
                 customerFilter: document.getElementById('customerFilter'), 
@@ -614,8 +613,7 @@
             
             function openSettings() { elements.urlInput.value = state.scriptUrl || ''; elements.settingsModal.classList.remove('hidden'); }
             function closeSettings() { elements.settingsModal.classList.add('hidden'); }
-            function saveSettings() { const u = elements.urlInput.value.trim(); if (!u) { showError('settings', 'กรุณาใส่ URL'); return; } if (!u.endsWith('/exec')) { showError('settings', 'URL ไม่ถูกต้อง'); return; } state.scriptUrl = u; localStorage.setItem('scriptUrl', u); closeSettings(); loadData(); updateAutoRefresh(); }
-            function updateAutoRefresh() { const s = parseInt(elements.refreshInterval.value, 10); localStorage.setItem('refreshInterval', s); if (state.autoRefreshTimer) clearInterval(state.autoRefreshTimer); if (s > 0) state.autoRefreshTimer = setInterval(loadData, s * 1000); }
+            function saveSettings() { const u = elements.urlInput.value.trim(); if (!u) { showError('settings', 'กรุณาใส่ URL'); return; } if (!u.endsWith('/exec')) { showError('settings', 'URL ไม่ถูกต้อง'); return; } state.scriptUrl = u; localStorage.setItem('scriptUrl', u); closeSettings(); loadData(); }
             function getInitialUrl() { const p = new URLSearchParams(window.location.search); let u = p.get('url'); const a = p.get('api'); if (!u && a) u = `https://script.google.com/macros/s/${a}/exec`; if (u) localStorage.setItem('scriptUrl', u); return localStorage.getItem('scriptUrl'); }
             function setLoadingState(L) { elements.refreshBtn.disabled = L; elements.refreshBtn.querySelector('span').innerHTML = L ? '⏳' : '🔄'; }
             function showError(t, m) { const e = t === 'main' ? elements.mainError : elements.settingsError; e.innerHTML = m.replace(/\n/g, '<br>'); e.classList.remove('hidden'); }
@@ -637,7 +635,6 @@
                 elements.closeSettingsBtn.addEventListener('click', closeSettings);
                 elements.saveSettingsBtn.addEventListener('click', saveSettings);
                 elements.refreshBtn.addEventListener('click', loadData);
-                elements.refreshInterval.addEventListener('change', updateAutoRefresh);
                 elements.clearFiltersBtn.addEventListener('click', clearAllFilters);
                 elements.customerFilter.addEventListener('change', e => { state.filters.customer = e.target.value; renderContent(); });
                 elements.testerFilter.addEventListener('change', e => { state.filters.tester = e.target.value; renderContent(); }); 
@@ -685,7 +682,7 @@
                     }
                 });
             }
-            function initializeApp() { setupEventListeners(); elements.refreshInterval.value = localStorage.getItem('refreshInterval') || '30'; state.scriptUrl = getInitialUrl(); if (state.scriptUrl) { loadData(); updateAutoRefresh(); } else { openSettings(); } }
+            function initializeApp() { setupEventListeners(); state.scriptUrl = getInitialUrl(); if (state.scriptUrl) { loadData(); } else { openSettings(); } }
             
             try { 
                 initializeApp(); 
