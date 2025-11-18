@@ -367,8 +367,8 @@
                             name: currentUser.displayName || currentUser.email,
                             email: currentUser.email,
                             uid: currentUser.uid,
-                            createdAt: serverTimestamp()
-                                                        roomId: state.currentChatRoomId // ⭐️⭐️ [เพิ่มนี่]
+                            createdAt: serverTimestamp(),
+                            roomId: state.currentChatRoomId // ⭐️⭐️ [เพิ่มนี่]
                         });
                         elements.chatModalInput.value = ''; 
                     } catch (err) {
