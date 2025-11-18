@@ -26,10 +26,17 @@
         .info-card { background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border-left: 4px solid #0ea5e9; }
         .data-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; font-weight: 600; }
 
-        /* ======== 💬 CSS สำหรับแชท START ======== */
+        /* ======== 💬 CSS สำหรับแชท (ใช้ทั้ง Widget และ Modal) START ======== */
         .chat-widget { position: fixed; bottom: 2rem; right: 2rem; width: 350px; border-radius: 1rem; box-shadow: 0 10px 25px rgba(0,0,0,0.15); overflow: hidden; z-index: 100; transition: all 0.3s; }
         .chat-header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 1rem; font-weight: bold; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
-        .chat-body { height: 400px; overflow-y: auto; background: #f9f9f9; padding: 1rem; display: flex; flex-direction: column-reverse; }
+        
+        /* ⭐️ CSS สำหรับ Modal ใหม่ ⭐️ */
+        #chatModalBody { height: 50vh; overflow-y: auto; background: #f9f9f9; padding: 1rem; display: flex; flex-direction: column-reverse; }
+
+        /* ⭐️ CSS สำหรับ Widget เดิม (ปรับปรุง) ⭐️ */
+        .chat-body-widget { background: #f9f9f9; padding: 1rem; }
+        
+        /* ⭐️ CSS ที่ใช้ร่วมกัน ⭐️ */
         .chat-messages { display: flex; flex-direction: column; gap: 0.75rem; }
         .chat-bubble { max-width: 80%; padding: 0.5rem 0.75rem; border-radius: 0.75rem; word-wrap: break-word; }
         .chat-bubble.mine { background: #667eea; color: white; align-self: flex-end; border-bottom-right-radius: 0.25rem; }
@@ -57,6 +64,25 @@
                 <div class="flex gap-3"><button id="saveSettingsBtn" class="flex-1 bg-gradient-to-r from-blue-500 to-purple-600 text-white py-3 rounded-lg font-semibold hover:shadow-lg transition-all">บันทึก</button><button id="closeSettingsBtn" class="px-6 bg-gray-200 text-gray-700 py-3 rounded-lg font-semibold hover:bg-gray-300 transition-colors">ยกเลิก</button></div>
             </div>
         </div>
+
+        <div id="chatModal" class="hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-[110] p-4 backdrop-blur-sm">
+            <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden">
+                <div class="chat-header !cursor-default">
+                    <span id="chatModalTitle" class="truncate">แชทสำหรับ...</span>
+                    <button id="chatModalCloseBtn" class="text-white text-2xl font-bold leading-none px-2 py-1 rounded-full hover:bg-white hover:bg-opacity-20">&times;</button>
+                </div>
+                
+                <div id="chatModalBody">
+                    <div id="chatModalMessages" class="chat-messages">
+                        </div>
+                </div>
+
+                <form id="chatModalForm" class="chat-input">
+                    <input type="text" id="chatModalInput" placeholder="พิมพ์ข้อความ..." autocomplete="off" />
+                    <button type="submit" id="chatModalSendBtn">ส่ง</button>
+                </form>
+            </div>
+        </div>
         
         <div class="mb-8">
             <div class="header-gradient rounded-2xl shadow-2xl p-8 text-white"><div class="flex items-start justify-between gap-4 mb-6 flex-wrap"><div><h1 class="text-4xl font-bold mb-2 flex items-center gap-3"><span class="text-5xl">📊</span> BEV Dashboard Test Product & PM Engineer</h1><p class="text-white text-opacity-90 text-sm hidden"></p></div><div class="flex gap-3 flex-wrap"><a href="https://docs.google.com/spreadsheets/d/1K5532IFh_zpI_ZI7TcDedyYedztRvRMEXcdo3BSBvXA/edit?usp=sharing" target="_blank" class="pulse-glow bg-gradient-to-r from-green-400 to-green-600 hover:from-green-500 hover:to-green-700 text-white px-6 py-3 rounded-xl font-bold flex items-center gap-3 shadow-2xl transform hover:scale-105 transition-all"><span class="text-2xl">📜</span><span>เปิด Google Sheet</span></a><button id="refreshBtn" class="bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-4 py-2.5 rounded-lg font-semibold flex items-center gap-2 transition-all"><span>🔄</span> รีเฟรช</button><button id="openSettingsBtn" class="bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-4 py-2.5 rounded-lg font-semibold flex items-center gap-2 transition-all"><span>⚙️</span> ตั้งค่า</button></div></div><div class="bg-black bg-opacity-20 rounded-xl p-4 backdrop-blur-sm"><div class="flex items-center justify-between flex-wrap gap-4"><div class="flex items-center gap-3 hidden"><span class="text-2xl">⏱️</span><span class="font-semibold">รีเฟรชอัตโนมัติ:</span></div><select id="refreshInterval" class="bg-white text-gray-900 border-0 rounded-lg px-4 py-2 text-sm focus:outline-none font-semibold shadow-lg"><option value="0">ปิด</option><option value="30" selected>30 วินาที</option><option value="60">1 นาที</option><option value="120">2 นาที</option></select></div></div></div>
@@ -70,29 +96,23 @@
         <div id="content" class="space-y-4"></div>
     </div>
 
-    <div id="chatWidget" class="chat-widget hidden">
+    <div id="chatWidget" class="chat-widget">
         <div id="chatHeader" class="chat-header">
-            <span>💬 แชทภายในทีม</span>
-            <span id="chatToggle" class="cursor-pointer">▲</span>
-        </div>
+            <span>💬 สถานะแชท</span>
+            <span id="chatToggle" class="cursor-pointer">▲</span> </div>
         
-        <div id="chatContainer" class="hidden">
+        <div id="chatContainer" class="hidden"> 
             <div id="chatSignIn" class="chat-signin">
                 <p class="mb-4 text-gray-700">กรุณา Sign in with Google เพื่อใช้งานแชท</p>
                 <button id="chatLoginBtn">Sign in with Google</button>
             </div>
             
             <div id="chatMain" class="hidden">
-                <div class="chat-body">
-                    <div id="chatMessages" class="chat-messages">
-                        </div>
+                <div class="chat-body-widget">
+                    <p class="text-sm text-gray-700">✅ คุณล็อกอินแล้ว</p>
+                    <p class="text-sm text-gray-500">คลิกปุ่ม 💬 ในการ์ดเพื่องานแชท</p>
                 </div>
-                
-                <form id="chatForm" class="chat-input">
-                    <input type="text" id="chatInput" placeholder="พิมพ์ข้อความ..." autocomplete="off" />
-                    <button type="submit" id="chatSendBtn">ส่ง</button>
-                </form>
-            </div>
+                </div>
         </div>
     </div>
     <script type="module">
@@ -116,12 +136,11 @@
             orderBy,
             limit,
             onSnapshot
-            // (ไม่มี doc, setDoc, deleteDoc)
         } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-firestore.js";
 
         
         // =============================================
-        // 🔥 FIREBASE v12 CONFIG (จากที่คุณส่งมา)
+        // 🔥 FIREBASE v12 CONFIG
         // =============================================
         const firebaseConfig = {
             apiKey: "AIzaSyCaH8Yuz4NTJ18woedPFhf1jL5UqSHxJqs",
@@ -149,133 +168,202 @@
         // 🚀 โค้ดทั้งหมดของแอป (Dashboard + Chat)
         // =============================================
         document.addEventListener('DOMContentLoaded', () => {
-            let state = { scriptUrl: null, autoRefreshTimer: null, allData: [], filters: { customer: '', tester: '', salesperson: '', status: '', month: '' } };
-            const elements = { settingsModal: document.getElementById('settingsModal'), urlInput: document.getElementById('urlInput'), saveSettingsBtn: document.getElementById('saveSettingsBtn'), closeSettingsBtn: document.getElementById('closeSettingsBtn'), openSettingsBtn: document.getElementById('openSettingsBtn'), settingsError: document.getElementById('settingsError'), refreshBtn: document.getElementById('refreshBtn'), refreshInterval: document.getElementById('refreshInterval'), mainError: document.getElementById('mainError'), content: document.getElementById('content'), customerFilter: document.getElementById('customerFilter'), testerFilter: document.getElementById('testerFilter'), salespersonFilter: document.getElementById('salespersonFilter'), statusFilter: document.getElementById('statusFilter'), monthFilter: document.getElementById('monthFilter'), clearFiltersBtn: document.getElementById('clearFiltersBtn'), activeFilters: document.getElementById('activeFilters'), activeFiltersList: document.getElementById('activeFiltersList') };
+            let state = { 
+                scriptUrl: null, 
+                autoRefreshTimer: null, 
+                allData: [], 
+                filters: { customer: '', tester: '', salesperson: '', status: '', month: '' },
+                currentChatRoomId: null // ⭐️⭐️ [เพิ่มใหม่] state สำหรับเก็บห้องแชท
+            };
+
+            const elements = { 
+                settingsModal: document.getElementById('settingsModal'), 
+                urlInput: document.getElementById('urlInput'), 
+                saveSettingsBtn: document.getElementById('saveSettingsBtn'), 
+                closeSettingsBtn: document.getElementById('closeSettingsBtn'), 
+                openSettingsBtn: document.getElementById('openSettingsBtn'), 
+                settingsError: document.getElementById('settingsError'), 
+                refreshBtn: document.getElementById('refreshBtn'), 
+                refreshInterval: document.getElementById('refreshInterval'), 
+                mainError: document.getElementById('mainError'), 
+                content: document.getElementById('content'), 
+                customerFilter: document.getElementById('customerFilter'), 
+                testerFilter: document.getElementById('testerFilter'), 
+                salespersonFilter: document.getElementById('salespersonFilter'), 
+                statusFilter: document.getElementById('statusFilter'), 
+                monthFilter: document.getElementById('monthFilter'), 
+                clearFiltersBtn: document.getElementById('clearFiltersBtn'), 
+                activeFilters: document.getElementById('activeFilters'), 
+                activeFiltersList: document.getElementById('activeFiltersList'),
+
+                // ⭐️⭐️ [เพิ่มใหม่] element ของ Modal แชท
+                chatModal: document.getElementById('chatModal'),
+                chatModalCloseBtn: document.getElementById('chatModalCloseBtn'),
+                chatModalTitle: document.getElementById('chatModalTitle'),
+                chatModalMessages: document.getElementById('chatModalMessages'),
+                chatModalForm: document.getElementById('chatModalForm'),
+                chatModalInput: document.getElementById('chatModalInput')
+            };
 
             // =============================================
-            // 🔥 ส่วนของ FIREBASE CHAT
+            // 🔥 ส่วนของ FIREBASE CHAT (ปรับปรุงใหม่)
             // =============================================
             let currentUser = null;
             let unsubscribeMessages = null; 
 
-            const chatWidget = document.getElementById('chatWidget');
+            // (อ้างอิง Widget เดิม)
             const chatHeader = document.getElementById('chatHeader');
             const chatToggle = document.getElementById('chatToggle');
             const chatContainer = document.getElementById('chatContainer');
             const chatSignIn = document.getElementById('chatSignIn');
             const chatLoginBtn = document.getElementById('chatLoginBtn');
             const chatMain = document.getElementById('chatMain');
-            const chatMessages = document.getElementById('chatMessages');
-            const chatForm = document.getElementById('chatForm');
-            const chatInput = document.getElementById('chatInput');
             
-            chatWidget.classList.remove('hidden'); 
+            // ⭐️ ลบ: `chatWidget.classList.remove('hidden');` (จะใช้การตั้งค่า hidden จาก HTML)
 
-            // ======== 🎵 2. ฟังก์ชันปลดล็อกเสียง (อัปเกรด: เพิ่มการขอสิทธิ์ Notification) ★★★★★ ========
+            // ======== 🎵 2. ฟังก์ชันปลดล็อกเสียง (เหมือนเดิม) ========
             function unlockAudio() {
                 if (isAudioUnlocked) return; 
                 isAudioUnlocked = true;
-                
-                // 1. ปลดล็อกเสียง (เหมือนเดิม)
                 notificationSound.play().then(() => {
                     notificationSound.pause();
                     notificationSound.currentTime = 0;
                 }).catch(e => {});
-
-                // 2. ★★★ เพิ่ม: ขอสิทธิ์แจ้งเตือน ★★★
-                // (จะทำงานเฉพาะถ้าสถานะยังไม่ได้ 'granted' หรือ 'denied')
                 if (Notification.permission !== 'granted' && Notification.permission !== 'denied') {
                     Notification.requestPermission().then(permission => {
-                        if (permission === 'granted') {
-                            console.log("Notification permission granted.");
-                        } else {
-                            console.log("Notification permission denied.");
-                        }
+                        if (permission === 'granted') console.log("Notification permission granted.");
+                        else console.log("Notification permission denied.");
                     });
                 }
-
-                // 3. ลบ listener ทิ้ง (เหมือนเดิม)
                 document.body.removeEventListener('click', unlockAudio, true);
                 document.body.removeEventListener('keydown', unlockAudio, true);
             }
             document.body.addEventListener('click', unlockAudio, true);
             document.body.addEventListener('keydown', unlockAudio, true);
 
-
-            // ปุ่ม Login
+            // ปุ่ม Login (เหมือนเดิม)
             chatLoginBtn.addEventListener('click', () => {
                 signInWithPopup(fbAuth, googleProvider).catch(error => {
                     console.error("Login failed:", error);
                 });
             });
 
-            // จัดการการส่งข้อความ
-            chatForm.addEventListener('submit', async (e) => {
+            // ⭐️⭐️ [เพิ่มใหม่] ฟังก์ชันควบคุม Modal ⭐️⭐️
+            function openChatModal(roomId, title) {
+                if (!currentUser) {
+                    alert("กรุณา Sign in with Google (ที่ Widget แชทล่างขวา) ก่อนใช้งานแชทครับ");
+                    return;
+                }
+                
+                // ถ้าเปิดห้องเดิมอยู่แล้ว ไม่ต้องทำอะไร
+                if (state.currentChatRoomId === roomId) return;
+
+                // ถ้ามีห้องเก่าเปิดอยู่ ให้ปิดก่อน
+                if (state.currentChatRoomId) {
+                    closeChatModal();
+                }
+
+                state.currentChatRoomId = roomId;
+                elements.chatModalTitle.textContent = `แชทสำหรับ: ${title}`;
+                elements.chatModalMessages.innerHTML = '<div class="text-center p-4 text-gray-500">กำลังโหลด...</div>';
+                elements.chatModal.classList.remove('hidden');
+                
+                // เริ่มฟังข้อความสำหรับห้องนี้
+                listenToMessages(roomId); 
+            }
+
+            function closeChatModal() {
+                if (unsubscribeMessages) unsubscribeMessages(); // หยุดฟัง
+                unsubscribeMessages = null;
+                state.currentChatRoomId = null;
+                elements.chatModal.classList.add('hidden');
+                elements.chatModalMessages.innerHTML = ''; // เคลียร์ข้อความ
+            }
+
+            // ⭐️⭐️ [เพิ่มใหม่] ฟังก์ชันส่งข้อความ (สำหรับ Modal) ⭐️⭐️
+            async function handleChatModalSubmit(e) {
                 e.preventDefault();
-                const text = chatInput.value.trim();
-                if (text && currentUser) {
+                const text = elements.chatModalInput.value.trim();
+                
+                // ต้องมีข้อความ, มี user, และมีห้องแชทที่เปิดอยู่
+                if (text && currentUser && state.currentChatRoomId) {
                     try {
-                        await addDoc(collection(fbStore, 'messages'), {
+                        // ⭐️⭐️ [สำคัญ] เปลี่ยน path ที่ส่ง
+                        // จาก collection(fbStore, 'messages')
+                        // เป็น collection(fbStore, 'chats', [ID ห้อง], 'messages')
+                        await addDoc(collection(fbStore, 'chats', state.currentChatRoomId, 'messages'), {
                             text: text,
                             name: currentUser.displayName || currentUser.email,
                             email: currentUser.email,
                             uid: currentUser.uid,
                             createdAt: serverTimestamp()
                         });
-                        chatInput.value = ''; 
+                        elements.chatModalInput.value = ''; 
                     } catch (err) {
                         console.error("Error sending message:", err);
                     }
                 }
-            });
+            }
+            
+            // ⭐️ ลบ: `chatForm.addEventListener('submit', ...)` (ของเก่า)
 
-            // ฟังสถานะล็อกอิน
+            // ฟังสถานะล็อกอิน (แก้ไข: เอา listenToMessages() ออก)
             onAuthStateChanged(fbAuth, user => {
                 if (user) {
                     currentUser = user;
                     chatSignIn.classList.add('hidden');
                     chatMain.classList.remove('hidden');
-                    listenToMessages();
+                    // ⭐️ ลบ: `listenToMessages();` (จะไม่ฟัง global แล้ว)
                 } else {
                     if (unsubscribeMessages) unsubscribeMessages();
-                    
                     currentUser = null;
                     chatSignIn.classList.remove('hidden');
                     chatMain.classList.add('hidden');
-                    chatMessages.innerHTML = ''; 
+                    
+                    // ถ้า Sign out ให้ปิด Modal แชทไปด้วย
+                    if (!elements.chatModal.classList.contains('hidden')) {
+                        closeChatModal();
+                    }
                 }
             });
             
-            // ฟังก์ชันดึง/ฟังข้อความ (อัปเกรด: เพิ่มการส่ง Notification) ★★★★★
-            function listenToMessages() {
-                if (unsubscribeMessages) unsubscribeMessages();
+            // ⭐️⭐️ [แก้ไข] ฟังก์ชันดึง/ฟังข้อความ (ให้รับ roomId) ⭐️⭐️
+            function listenToMessages(roomId) {
+                if (!roomId) return; // ถ้าไม่มี roomId ก็ไม่ต้องทำ
+
+                if (unsubscribeMessages) unsubscribeMessages(); // หยุดฟังของเก่า (ถ้ามี)
+                
                 let isInitialLoad = true;
-                const messagesQuery = query(collection(fbStore, 'messages'), orderBy('createdAt', 'desc'), limit(50));
+
+                // ⭐️⭐️ [สำคัญ] เปลี่ยน query
+                // จาก query(collection(fbStore, 'messages'), ...)
+                // เป็น query(collection(fbStore, 'chats', roomId, 'messages'), ...)
+                const messagesQuery = query(
+                    collection(fbStore, 'chats', roomId, 'messages'), 
+                    orderBy('createdAt', 'desc'), 
+                    limit(50)
+                );
                 
                 unsubscribeMessages = onSnapshot(messagesQuery, snapshot => {
-                    if (isInitialLoad) chatMessages.innerHTML = '';
+                    // ⭐️ แก้ไข: เคลียร์ข้อความใน Modal
+                    if (isInitialLoad) elements.chatModalMessages.innerHTML = ''; 
+
                     snapshot.docChanges().reverse().forEach(change => {
                         if (change.type === 'added') {
                             const data = change.doc.data();
-                            renderMessage(data); 
+                            renderMessage(data); // ⭐️ แก้ไข: เรียก renderMessage (ที่แก้แล้ว)
                             
-                            // เงื่อนไข: เป็นแชทใหม่ และ ไม่ใช่ของเรา
                             if (!isInitialLoad && currentUser && data.uid !== currentUser.uid) {
-                                
-                                // 1. เล่นเสียง
                                 notificationSound.load(); 
                                 notificationSound.play().catch(e => console.log("Audio play failed:", e.message));
 
-                                // 2. ★★★ เพิ่ม: แสดง Notification ★★★
-                                // (เช็กว่า: ผู้ใช้ซ่อนแท็บอยู่ AND เราได้รับสิทธิ์)
                                 if (document.hidden && Notification.permission === 'granted') {
                                     const senderName = data.name || data.email.split('@')[0];
                                     let body = data.text;
-                                    if (body.length > 100) body = body.substring(0, 100) + '...'; // กันข้อความยาวไป
-
+                                    if (body.length > 100) body = body.substring(0, 100) + '...';
                                     new Notification(`ข้อความใหม่จาก ${senderName}`, {
                                         body: body,
-                                        icon: 'https://www.gstatic.com/images/branding/product/2x/chat_48dp.png' // ไอคอน Google Chat
+                                        icon: 'https://www.gstatic.com/images/branding/product/2x/chat_48dp.png'
                                     });
                                 }
                             }
@@ -285,7 +373,7 @@
                 }, error => console.error("Error listening to messages:", error));
             }
             
-            // ฟังก์ชันแสดงผลข้อความ
+            // ⭐️⭐️ [แก้ไข] ฟังก์ชันแสดงผลข้อความ (ให้แสดงใน Modal) ⭐️⭐️
             function renderMessage(data) {
                 if (!currentUser) return;
                 const isMine = data.uid === currentUser.uid;
@@ -299,11 +387,13 @@
                 textDiv.textContent = data.text;
                 bubble.appendChild(senderDiv);
                 bubble.appendChild(textDiv);
-                chatMessages.appendChild(bubble); 
-                chatMessages.parentElement.scrollTop = chatMessages.parentElement.scrollHeight;
+
+                // ⭐️ แก้ไข: ชี้ไปที่ Modal
+                elements.chatModalMessages.appendChild(bubble); 
+                elements.chatModalMessages.parentElement.scrollTop = elements.chatModalMessages.parentElement.scrollHeight;
             }
 
-            // ฟังก์ชันพับ/กางแชท (ที่ถูกต้อง)
+            // ฟังก์ชันพับ/กางแชท (Widget ล่างขวา) (เหมือนเดิม)
             chatHeader.addEventListener('click', () => {
                 chatContainer.classList.toggle('hidden');
                 chatToggle.textContent = chatContainer.classList.contains('hidden') ? '▲' : '▼';
@@ -315,7 +405,7 @@
 
 
             //
-            // --- โค้ด DASHBOARD เดิมของคุณ START ---
+            // --- โค้ด DASHBOARD เดิมของคุณ START (มีการแก้ไข 1 จุด) ---
             //
             async function loadData() {
                 if (!state.scriptUrl) { openSettings(); return; }
@@ -341,7 +431,6 @@
                 let currentGroup = null;
                 for (let i = 1; i < rows.length; i++) {
                     const row = rows[i].map(c => String(c || '').trim());
-                    // ★★★ ตรวจสอบว่าคอลัมน์ O (15) คือ modifiedTimeRaw ★★★
                     const [workOrder, salesperson, requestDateRaw, customer, ci, solution, device, brand, protocol, features, result, notes, tester, date, modifiedTimeRaw] = row; 
                     if (workOrder) {
                         if (currentGroup) groupedData.push(currentGroup);
@@ -351,7 +440,7 @@
                             customer, salesperson, ci, tester, 
                             date: formattedTestDate,
                             requestDate: formattedRequestDate,
-                            modifiedTime: formatSheetTime(modifiedTimeRaw), // <--- ใช้งานตัวแปรที่ 15
+                            modifiedTime: formatSheetTime(modifiedTimeRaw),
                             devices: [], statusCount: { passed: 0, failed: 0, pending: 0 }, 
                             pmData: pmEngineerMap.get(`${customer}_${ci}`) || null 
                         };
@@ -361,7 +450,6 @@
                         if (res.includes('ไม่ผ่าน')) currentGroup.statusCount.failed++; 
                         else if (res.includes('ผ่าน')) currentGroup.statusCount.passed++; 
                         else currentGroup.statusCount.pending++;
-                        // ★★★ ตรวจสอบว่าคอลัมน์ K (11) คือ result ★★★
                         currentGroup.devices.push({ solution, device, brand, protocol, features, result, notes, date });
                     }
                 }
@@ -384,7 +472,11 @@
             }
             function renderContent() { const { customer, tester, salesperson, status, month } = state.filters; let processedData = state.allData.filter(group => (!customer || group.customer === customer) && (!tester || group.tester === tester) && (!salesperson || group.salesperson === salesperson) && (!month || (group.pmData && group.pmData.month && group.pmData.month.includes(month)))); if (status) { processedData = processedData.map(group => ({ ...group, devices: group.devices.filter(device => device.result.includes(status)) })).filter(group => group.devices.length > 0); } updateActiveFilters(); if (processedData.length === 0) { elements.content.innerHTML = `<div class="bg-white rounded-2xl shadow-lg p-16 text-center"><div class="text-6xl mb-4">🔍</div><p class="text-gray-800 text-xl font-bold mb-2">ไม่พบข้อมูล</p><p class="text-gray-500 text-sm">ลองปรับเปลี่ยนการกรองข้อมูลของคุณ</p></div>`; return; } elements.content.innerHTML = processedData.map((g, i) => createGroupCardHTML(g, i)).join(''); }
             
+            // ⭐️⭐️ [แก้ไข] เพิ่มปุ่มแชท ⭐️⭐️
             function createGroupCardHTML(group, index) { 
+                // ⭐️ สร้าง ID ห้องแชทที่ปลอดภัย (กันอักขระพิเศษ)
+                const safeRoomId = (group.customer + '_' + group.ci).replace(/[\.\/\[\]\$#]/g, '_');
+
                 const statuses = [{count:group.statusCount.passed,label:'ผ่าน',icon:'✓',color:'bg-emerald-500 text-white shadow-lg shadow-emerald-200'},{count:group.statusCount.failed,label:'ไม่ผ่าน',icon:'✕',color:'bg-rose-500 text-white shadow-lg shadow-rose-200'},{count:group.statusCount.pending,label:'รอทดสอบ',icon:'◌',color:'bg-slate-400 text-white shadow-lg shadow-slate-200'}];
                 const sBadges = statuses.filter(s => s.count > 0).map(s => `<div class="status-badge ${s.color}"><span>${s.icon}</span> <strong>${s.count}</strong> ${s.label}</div>`).join('');
                 
@@ -413,6 +505,9 @@
                                 </div>
                                 <div class="flex flex-col items-end gap-4 flex-wrap justify-end">
                                     <div class="flex flex-wrap gap-2 justify-end">${sBadges}</div>
+                                    
+                                    <button class="!cursor-pointer bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-2 rounded-lg font-semibold flex items-center gap-2 transition-all text-sm shadow-md" data-chat-room-id="${safeRoomId}"><span>💬</span> แชท</button>
+
                                     <span class="arrow-icon text-indigo-400 text-2xl font-bold">▼</span>
                                 </div>
                             </div>
@@ -433,11 +528,8 @@
             function getStatusColorClass(s) { s=(s||'').toLowerCase();if(s.includes('ไม่ผ่าน'))return'bg-gradient-to-r from-rose-500 to-red-600 text-white';if(s.includes('ผ่าน'))return'bg-gradient-to-r from-emerald-500 to-green-600 text-white';return'bg-gradient-to-r from-slate-400 to-gray-500 text-white';}
             function getStatusBorderColor(s) { s=(s||'').toLowerCase();if(s.includes('ไม่ผ่าน'))return'border-rose-500';if(s.includes('ผ่าน'))return'border-emerald-500';return'border-slate-400';}
             
-            // ★★★ โค้ดที่ถูกต้อง (ไม่มี Pos หรือ function ผิด) ★★★
             function openSettings() { elements.urlInput.value = state.scriptUrl || ''; elements.settingsModal.classList.remove('hidden'); }
             function closeSettings() { elements.settingsModal.classList.add('hidden'); }
-            // ★★★★★★★★★★★★★★★★★★★★★★★★★
-
             function saveSettings() { const u = elements.urlInput.value.trim(); if (!u) { showError('settings', 'กรุณาใส่ URL'); return; } if (!u.endsWith('/exec')) { showError('settings', 'URL ไม่ถูกต้อง'); return; } state.scriptUrl = u; localStorage.setItem('scriptUrl', u); closeSettings(); loadData(); updateAutoRefresh(); }
             function updateAutoRefresh() { const s = parseInt(elements.refreshInterval.value, 10); localStorage.setItem('refreshInterval', s); if (state.autoRefreshTimer) clearInterval(state.autoRefreshTimer); if (s > 0) state.autoRefreshTimer = setInterval(loadData, s * 1000); }
             function getInitialUrl() { const p = new URLSearchParams(window.location.search); let u = p.get('url'); const a = p.get('api'); if (!u && a) u = `https://script.google.com/macros/s/${a}/exec`; if (u) localStorage.setItem('scriptUrl', u); return localStorage.getItem('scriptUrl'); }
@@ -455,6 +547,7 @@
                 renderContent();
             }
 
+            // ⭐️⭐️ [แก้ไข] เพิ่ม Listener สำหรับ Modal ⭐️⭐️
             function setupEventListeners() {
                 elements.openSettingsBtn.addEventListener('click', openSettings);
                 elements.closeSettingsBtn.addEventListener('click', closeSettings);
@@ -463,14 +556,41 @@
                 elements.refreshInterval.addEventListener('change', updateAutoRefresh);
                 elements.clearFiltersBtn.addEventListener('click', clearAllFilters);
                 elements.customerFilter.addEventListener('change', e => { state.filters.customer = e.target.value; renderContent(); });
-                
-                // ★★★ แก้ไข 'click' เป็น 'change' ★★★
                 elements.testerFilter.addEventListener('change', e => { state.filters.tester = e.target.value; renderContent(); }); 
-
                 elements.salespersonFilter.addEventListener('change', e => { state.filters.salesperson = e.target.value; renderContent(); });
                 elements.statusFilter.addEventListener('change', e => { state.filters.status = e.target.value; renderContent(); });
                 elements.monthFilter.addEventListener('change', e => { state.filters.month = e.target.value; renderContent(); });
-                elements.content.addEventListener('click', e => { const h = e.target.closest('[data-toggle-index]'); if (h) { const d = h.nextElementSibling; const a = h.querySelector('.arrow-icon'); d.classList.toggle('open'); a.classList.toggle('open'); } });
+
+                // ⭐️⭐️ [เพิ่มใหม่] Listener สำหรับ Modal
+                elements.chatModalCloseBtn.addEventListener('click', closeChatModal);
+                elements.chatModalForm.addEventListener('submit', handleChatModalSubmit);
+                
+                // ⭐️⭐️ [แก้ไข] Listener สำหรับ content (เพิ่มการดักจับปุ่มแชท)
+                elements.content.addEventListener('click', e => {
+                    // 1. ตรวจสอบปุ่มแชท
+                    const chatBtn = e.target.closest('[data-chat-room-id]');
+                    if (chatBtn) {
+                        e.stopPropagation(); // หยุดไม่ให้ card พับ/กาง
+                        const roomId = chatBtn.dataset.chatRoomId;
+                        
+                        // หาลูกค้าจาก H3 ในการ์ดเดียวกัน
+                        const cardHeader = chatBtn.closest('.p-6');
+                        const customerName = cardHeader ? cardHeader.querySelector('h3').textContent.replace('🏢', '').trim() : roomId;
+                        
+                        openChatModal(roomId, customerName);
+                        return; // จบการทำงาน
+                    }
+
+                    // 2. ตรวจสอบปุ่มพับ/กาง (ของเดิม)
+                    const h = e.target.closest('[data-toggle-index]');
+                    if (h) {
+                        const d = h.nextElementSibling;
+                        const a = h.querySelector('.arrow-icon');
+                        d.classList.toggle('open');
+                        a.classList.toggle('open');
+                    }
+                });
+
                 elements.activeFiltersList.addEventListener('click', e => {
                     const clearBtn = e.target.closest('[data-clear-filter]');
                     if (clearBtn) {
