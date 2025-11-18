@@ -173,7 +173,8 @@
                 autoRefreshTimer: null, 
                 allData: [], 
                 filters: { customer: '', tester: '', salesperson: '', status: '', month: '' },
-                currentChatRoomId: null // ⭐️⭐️ [เพิ่มใหม่] state สำหรับเก็บห้องแชท
+                currentChatRoomId: null, // ⭐️⭐️ [เพิ่มใหม่] state สำหรับเก็บห้องแชท
+                currentChatTitle: null // ⭐️⭐️ [เพิ่มนี่] state สำหรับเก็บ "ชื่อ" ห้องแชท
             };
 
             const elements = { 
@@ -264,6 +265,7 @@
                 }
 
                 state.currentChatRoomId = roomId;
+                state.currentChatTitle = title; // ⭐️⭐️ [เพิ่มนี่]
                 elements.chatModalTitle.textContent = `แชทสำหรับ: ${title}`;
                 elements.chatModalMessages.innerHTML = '<div class="text-center p-4 text-gray-500">กำลังโหลด...</div>';
                 elements.chatModal.classList.remove('hidden');
@@ -276,6 +278,7 @@
                 if (unsubscribeMessages) unsubscribeMessages(); // หยุดฟัง
                 unsubscribeMessages = null;
                 state.currentChatRoomId = null;
+                state.currentChatTitle = null; // ⭐️⭐️ [เพิ่มนี่]
                 elements.chatModal.classList.add('hidden');
                 elements.chatModalMessages.innerHTML = ''; // เคลียร์ข้อความ
             }
@@ -361,7 +364,10 @@
                                     const senderName = data.name || data.email.split('@')[0];
                                     let body = data.text;
                                     if (body.length > 100) body = body.substring(0, 100) + '...';
-                                    new Notification(`ข้อความใหม่จาก ${senderName}`, {
+                                    // ⭐️⭐️ [แก้ไข] ดึงชื่อห้องจาก state มาใส่
+                                    const roomTitle = state.currentChatTitle || 'แชท'; 
+                                    
+                                    new Notification(`[${roomTitle}] ข้อความใหม่จาก ${senderName}`, {
                                         body: body,
                                         icon: 'https://www.gstatic.com/images/branding/product/2x/chat_48dp.png'
                                     });
