@@ -136,6 +136,7 @@
             orderBy,
             limit,
             onSnapshot
+                        collectionGroup // ⭐️⭐️ [เพิ่มนี่]
         } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-firestore.js";
 
         
@@ -175,6 +176,7 @@
                 filters: { customer: '', tester: '', salesperson: '', status: '', month: '' },
                 currentChatRoomId: null, // ⭐️⭐️ [เพิ่มใหม่] state สำหรับเก็บห้องแชท
                 currentChatTitle: null // ⭐️⭐️ [เพิ่มนี่] state สำหรับเก็บ "ชื่อ" ห้องแชท
+                                roomIdToTitleMap: null // ⭐️⭐️ [เพิ่มนี่] สำหรับเก็บ ID->ชื่อ
             };
 
             const elements = { 
@@ -211,6 +213,72 @@
             // =============================================
             let currentUser = null;
             let unsubscribeMessages = null; 
+                        let globalMessageListener = null; // ⭐️⭐️ [เพิ่มนี่]
+
+                        // ⭐️⭐️ [เพิ่มฟังก์ชันใหม่] ⭐️⭐️
+            function startGlobalListener() {
+                if (globalMessageListener) globalMessageListener(); // ปิดตัวเก่า (ถ้ามี)
+                if (!currentUser) return; // ต้อง login ก่อน
+
+                let isInitialGlobalLoad = true;
+                const globalQuery = query(collectionGroup(fbStore, 'messages'), orderBy('createdAt', 'desc'), limit(1));
+
+                globalMessageListener = onSnapshot(globalQuery, (snapshot) => {
+                    // ไม่สนใจข้อมูลที่โหลดมาครั้งแรก (เราสนใจเฉพาะ "ใหม่ล่าสุด" ที่เข้ามา)
+                    if (isInitialGlobalLoad) {
+                        isInitialGlobalLoad = false;
+                        return;
+                    }
+
+                    snapshot.docChanges().forEach(change => {
+                        if (change.type === 'added') {
+                            const data = change.doc.data();
+                            
+                            // 1. ต้องไม่ใช่ข้อความจากเรา
+                            const notFromMe = currentUser && data.uid !== currentUser.uid;
+                            // 2. ต้องไม่ใช่ข้อความจากห้องที่เรา "เปิด" Modal ค้างไว้อยู่
+                            const notInActiveRoom = data.roomId !== state.currentChatRoomId;
+
+                            if (notFromMe && notInActiveRoom) {
+                                // ⭐️⭐️ นี่คือข้อความใหม่จาก "ห้องอื่น" ⭐️⭐️
+                                
+                                // 1. เล่นเสียง
+                                notificationSound.load(); 
+                                notificationSound.play().catch(e => console.log("Audio play failed:", e.message));
+
+                                // 2. แสดง Notification (ถ้าซ่อนแท็บอยู่)
+                                if (document.hidden && Notification.permission === 'granted') {
+                                    const senderName = data.name || data.email.split('@')[0];
+                                    let body = data.text;
+                                    if (body.length > 100) body = body.substring(0, 100) + '...';
+
+                                    // ดึงชื่อห้องจาก Map ที่เราสร้างไว้
+                                    const roomTitle = state.roomIdToTitleMap?.get(data.roomId) || data.roomId || 'แชท'; 
+                                    
+                                    new Notification(`[${roomTitle}] ข้อความใหม่จาก ${senderName}`, {
+                                        body: body,
+                                        icon: 'https://www.gstatic.com/images/branding/product/2x/chat_48dp.png'
+                                    });
+                                }
+                            }
+                        }
+                    });
+
+                }, (error) => {
+                    // ⭐️⭐️ [สำคัญมาก] แจ้งเตือนถ้าต้องสร้าง Index
+                    console.error("Global listener error: ", error.message);
+                    if (error.code === 'failed-precondition' && error.message.includes('index')) {
+                        showError('main', `
+                            <b>🔥 ต้องตั้งค่า Firestore เพิ่มเติม!</b><br>
+                            ระบบแชทส่วนกลางต้องการ Index ใหม่<br>
+                            1. เปิด Console (F12)
+                            2. คัดลอก "ลิงก์" ที่แสดงใน Error log (สีแดงๆ)
+                            3. เปิดลิงก์นั้นในแท็บใหม่แล้วกด "Create Index"
+                            4. รีเฟรชหน้านี้หลัง Index สร้างเสร็จ (ใช้เวลา 2-3 นาที)
+                        `);
+                    }
+                });
+            }
 
             // (อ้างอิง Widget เดิม)
             const chatHeader = document.getElementById('chatHeader');
@@ -300,6 +368,7 @@
                             email: currentUser.email,
                             uid: currentUser.uid,
                             createdAt: serverTimestamp()
+                                                        roomId: state.currentChatRoomId // ⭐️⭐️ [เพิ่มนี่]
                         });
                         elements.chatModalInput.value = ''; 
                     } catch (err) {
@@ -316,9 +385,11 @@
                     currentUser = user;
                     chatSignIn.classList.add('hidden');
                     chatMain.classList.remove('hidden');
+                                        startGlobalListener(); // ⭐️⭐️ [เพิ่มนี่]
                     // ⭐️ ลบ: `listenToMessages();` (จะไม่ฟัง global แล้ว)
                 } else {
                     if (unsubscribeMessages) unsubscribeMessages();
+                                        if (globalMessageListener) globalMessageListener(); // ⭐️⭐️ [เพิ่มนี่]
                     currentUser = null;
                     chatSignIn.classList.remove('hidden');
                     chatMain.classList.add('hidden');
@@ -425,6 +496,13 @@
                     if (data.error) { throw new Error(data.error); }
                     const pmEngineerMap = createPmEngineerMap(data.engi || []);
                     state.allData = groupProductData(data.product || [], pmEngineerMap);
+                                        // ⭐️⭐️ [เพิ่มนี่] สร้าง Map สำหรับค้นหาชื่อห้อง
+                    state.roomIdToTitleMap = new Map();
+                    state.allData.forEach(group => {
+                        const safeRoomId = (group.customer + '_' + group.ci).replace(/[\.\/\[\]\$#]/g, '_');
+                        state.roomIdToTitleMap.set(safeRoomId, group.customer);
+                    });
+
                     populateFilterDropdowns();
                     renderContent();
                 } catch (error) { showError('main', `เกิดข้อผิดพลาด: ${error.message}`); } 
