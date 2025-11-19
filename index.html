@@ -614,7 +614,23 @@
             function openSettings() { elements.urlInput.value = state.scriptUrl || ''; elements.settingsModal.classList.remove('hidden'); }
             function closeSettings() { elements.settingsModal.classList.add('hidden'); }
             function saveSettings() { const u = elements.urlInput.value.trim(); if (!u) { showError('settings', 'กรุณาใส่ URL'); return; } if (!u.endsWith('/exec')) { showError('settings', 'URL ไม่ถูกต้อง'); return; } state.scriptUrl = u; localStorage.setItem('scriptUrl', u); closeSettings(); loadData(); }
-            function getInitialUrl() { const p = new URLSearchParams(window.location.search); let u = p.get('url'); const a = p.get('api'); if (!u && a) u = `https://script.google.com/macros/s/${a}/exec`; if (u) localStorage.setItem('scriptUrl', u); return localStorage.getItem('scriptUrl'); }
+            function getInitialUrl() {
+                // 1. ลิงก์ Apps Script ของคุณ (ฝังไว้ตรงนี้เลย)
+                const hardcodedUrl = "https://script.google.com/macros/s/AKfycbwHwSkbSYCoprC14yOJTxL056-I4tQe4xHc7oZFD7fR2nyC7gOb8TJQv_I1TaT1slA/exec";
+
+                // 2. เช็คว่ามีการส่งลิงก์ใหม่มาทาง URL หรือไม่ (เผื่อไว้เทส)
+                const p = new URLSearchParams(window.location.search);
+                let u = p.get('url');
+                
+                // 3. ถ้าไม่มีการส่งลิงก์มา ให้ใช้ตัวที่ฝังไว้เป็นหลัก
+                if (!u) {
+                    u = hardcodedUrl;
+                }
+
+                // บันทึกลงเครื่องไว้ด้วย (เผื่อส่วนอื่นเรียกใช้)
+                localStorage.setItem('scriptUrl', u);
+                return u;
+            }
             function setLoadingState(L) { elements.refreshBtn.disabled = L; elements.refreshBtn.querySelector('span').innerHTML = L ? '⏳' : '🔄'; }
             function showError(t, m) { const e = t === 'main' ? elements.mainError : elements.settingsError; e.innerHTML = m.replace(/\n/g, '<br>'); e.classList.remove('hidden'); }
             function hideError(t) { const e = t === 'main' ? elements.mainError : elements.settingsError; e.classList.add('hidden'); }
